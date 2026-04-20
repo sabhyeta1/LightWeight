@@ -1,30 +1,27 @@
-const db = require('../database');
-const WorkoutPlan = require('../models/WorkoutPlan');
+const db = require("../database");
+const WorkoutPlan = require("../models/WorkoutPlan");
 
-const createPlan = (owner, name, description) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'INSERT INTO workout_plan (owner, name, description, is_published) VALUES (?,?,?,0)';
-        db.run(sql, [owner, name, description], function(err){
-            if (err) reject(err);
-            else resolve(new WorkoutPlan({
-                id: this.lastID,
-                owner,
-                name,
-                description,
-                is_published: false
-            }));
-        });
-    });
-};
+async function createPlan(ownerId, name, description, is_published) {
+  const sql = `
+    INSERT INTO workout_plan (owner_id, name, description, is_published)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, owner_id, name, description, is_published
+  `;
 
-const findPlansByUser = (userId) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM workout_plan WHERE owner = ?'
-        db.all(sql,[userId], (err,rows) => {
-            if (err) reject (err);
-            else resolve(rows.map(rows => new WorkoutPlan(row)));
-        });
-    });
-};
+  const { rows } = await db.query(sql, [ownerId, name, description, is_published]);
+  return new WorkoutPlan(rows[0]);
+}
 
-module.exports = {createPlan, findPlansByUser};
+async function findPlansByUser(userId) {
+  const sql = `
+    SELECT id, owner_id, name, description, is_published
+    FROM workout_plan
+    WHERE owner_id = $1
+    ORDER BY id DESC
+  `;
+
+  const { rows } = await db.query(sql, [userId]);
+  return rows.map((row) => new WorkoutPlan(row));
+}
+
+module.exports = { createPlan, findPlansByUser };

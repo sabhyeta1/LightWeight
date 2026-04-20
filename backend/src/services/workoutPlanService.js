@@ -1,11 +1,11 @@
 const workoutPlanRepository = require('../repositories/workoutPlanRepository');
 
-const createWorkoutPlan = async (owner, name, description) => {
+const createWorkoutPlan = async (ownerId, name, description, is_published) => {
     // Validierung
     if (!name) {
         throw new Error('Name is required');
     }
-    return await workoutPlanRepository.createPlan(owner, name, description);
+    return await workoutPlanRepository.createPlan(ownerId, name, description, is_published);
 };
 
 // pläne eines bestimmten users

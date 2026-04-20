@@ -3,10 +3,10 @@ const workoutPlanService = require('../services/workoutPlanService');
 
 const createWorkoutPlan = async (req, res) => {
     try {
-        const {name, description} = req.body;
-        const owner = 1; //dummy user - später req.user.id
+        const {name, description, is_published} = req.body;
+        const ownerId = 1; //dummy user - später req.user.id
         
-        const plan = await workoutPlanService.createWorkoutPlan(owner, name, description);
+        const plan = await workoutPlanService.createWorkoutPlan(ownerId, name, description, is_published);
         res.status(201).json(plan);
     } catch(err) {
         res.status(400).json({error: err.message});
