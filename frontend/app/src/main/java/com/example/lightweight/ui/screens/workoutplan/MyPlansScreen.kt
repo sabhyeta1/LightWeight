@@ -28,13 +28,18 @@ fun MyPlansScreen(
     onNavigateToCreate: () -> Unit = {},
     onEditPlan: (String) -> Unit = {},
     onDeletePlan: (String) -> Unit = {},
+    onNavigateTo: (String) -> Unit = {}
 ) {
-    // Dummy plans
     val plans = remember { mutableStateListOf("Bulk Phase 1", "Summer Cut", "Strength Focus") }
 
     Scaffold(
         topBar = { LightWeightHeader() },
-        bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
+        bottomBar = {
+            LightWeightBottomBar(
+                currentScreen = "My Plans",
+                onNavigateTo = onNavigateTo
+            )
+        },
         containerColor = Background,
     ) { paddingValues ->
         Column(

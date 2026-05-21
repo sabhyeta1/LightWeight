@@ -4,9 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.*
-import com.example.lightweight.ui.screens.auth.LoginScreen
-import com.example.lightweight.ui.screens.auth.RegisterScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.lightweight.navigation.Navigation
 import com.example.lightweight.ui.theme.LightWeightTheme
 
 class MainActivity : ComponentActivity() {
@@ -15,18 +14,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LightWeightTheme {
-                var currentScreen by remember { mutableStateOf("login") }
-
-                when (currentScreen) {
-                    "login" -> LoginScreen(
-                        onNavigateToRegister = { currentScreen = "register" },
-                        onLoginSuccess = { /* TODO: navigate to home */ }
-                    )
-                    "register" -> RegisterScreen(
-                        onNavigateToLogin = { currentScreen = "login" },
-                        onRegisterSuccess = { currentScreen = "login" }
-                    )
-                }
+                val navController = rememberNavController()
+                Navigation(navController = navController)
             }
         }
     }
