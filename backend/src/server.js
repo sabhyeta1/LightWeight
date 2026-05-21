@@ -1,9 +1,15 @@
 require("dotenv").config();
 const express = require("express");
 const apiRoutes = require('./routes/apiRoutes');
+const path = require("path");
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3000;
+
+app.use(
+  "/static",
+  express.static(path.join(__dirname, "../public"))
+);
 
 app.use(express.json());
 app.use('/api', apiRoutes);
