@@ -13,6 +13,7 @@ import com.example.lightweight.ui.screens.community.CommunityScreen
 import com.example.lightweight.ui.screens.workoutplan.MyPlansScreen
 import com.example.lightweight.ui.screens.workoutplan.CreateWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.EditWorkoutPlanScreen
+import com.example.lightweight.ui.screens.workoutplan.ExerciseDetailScreen
 import com.example.lightweight.ui.screens.calendar.CalendarScreen
 import com.example.lightweight.ui.screens.profile.ProfileScreen
 
@@ -66,7 +67,10 @@ fun Navigation(navController: NavHostController) {
         composable(Screen.CreatePlan.route) {
             CreateWorkoutPlanScreen(
                 onSave = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
+                onCancel = { navController.popBackStack() },
+                onEditExercise = { exerciseName ->
+                    navController.navigate(Screen.ExerciseDetail.createRoute(exerciseName))
+                }
             )
         }
 
@@ -78,7 +82,22 @@ fun Navigation(navController: NavHostController) {
             EditWorkoutPlanScreen(
                 planName = planName,
                 onCancel = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
+                onSaveSuccess = { navController.popBackStack() },
+                onEditExercise = { exerciseName ->
+                    navController.navigate(Screen.ExerciseDetail.createRoute(exerciseName))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ExerciseDetail.route,
+            arguments = listOf(navArgument("exerciseName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
+            ExerciseDetailScreen(
+                exerciseName = exerciseName,
+                onSave = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() }
             )
         }
 

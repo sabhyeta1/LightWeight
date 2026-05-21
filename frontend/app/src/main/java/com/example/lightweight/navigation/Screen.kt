@@ -1,6 +1,6 @@
 package com.example.lightweight.navigation
 
-sealed class Screen(val route: String)  {
+sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
     object Home : Screen("home")
@@ -11,5 +11,8 @@ sealed class Screen(val route: String)  {
     object CreatePlan : Screen("create_plan")
     object EditPlan : Screen("edit_plan/{planName}") {
         fun createRoute(planName: String) = "edit_plan/$planName"
+    }
+    object ExerciseDetail : Screen("exercise_detail/{exerciseName}") {
+        fun createRoute(exerciseName: String) = "exercise_detail/$exerciseName"
     }
 }

@@ -22,7 +22,8 @@ fun EditWorkoutPlanScreen(
     isPublic: Boolean = true,
     selectedExercises: List<String> = listOf("Bench Press", "Squat", "Deadlift"),
     onCancel: () -> Unit = {},
-    onSaveSuccess: () -> Unit = {}
+    onSaveSuccess: () -> Unit = {},
+    onEditExercise: (String) -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -61,6 +62,7 @@ fun EditWorkoutPlanScreen(
                 initialIsPublic = isPublic,
                 initialSelectedExercises = selectedExercises,
                 onCancel = onCancel,
+                onEditExercise = onEditExercise,
                 onSave = { _, _, _, _ ->
                     scope.launch {
                         snackbarHostState.showSnackbar("Saved changes")
