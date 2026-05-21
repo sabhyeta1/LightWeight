@@ -32,6 +32,8 @@ fun MyPlansScreen(
     // Dummy plans
     val plans = remember { mutableStateListOf("Bulk Phase 1", "Summer Cut", "Strength Focus") }
 
+    var planToDelete by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
         topBar = { LightWeightHeader() },
         bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
@@ -59,10 +61,7 @@ fun MyPlansScreen(
                     PlanItem(
                         name = plan,
                         onEdit = { onEditPlan(plan) },
-                        onDelete = {
-                            plans.remove(plan)
-                            onDeletePlan(plan)
-                        }
+                        onDelete = { planToDelete = plan }
                     )
                 }
             }
@@ -82,6 +81,34 @@ fun MyPlansScreen(
                 Text("Create New Plan", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
+    }
+
+    // Bestätigungs-Dialog — erscheint nur wenn planToDelete gesetzt ist
+    planToDelete?.let { plan ->
+        AlertDialog(
+            onDismissRequest = { planToDelete = null },
+            containerColor = Surface,
+            titleContentColor = Color.White,
+            textContentColor = Color.Gray,
+            title = { Text("Delete \"$plan\"?") },
+            text = { Text("This plan will be permanently removed. This cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        plans.remove(plan)
+                        onDeletePlan(plan)
+                        planToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = Color.Red, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { planToDelete = null }) {
+                    Text("Cancel", color = Color.Gray)
+                }
+            }
+        )
     }
 }
 

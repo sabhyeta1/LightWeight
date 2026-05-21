@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -166,25 +167,39 @@ fun WorkoutPlanForm(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Checkbox(
-                            checked = isSelected,
-                            onCheckedChange = {
-                                if (it) selectedExercises.add(exercise)
-                                else selectedExercises.remove(exercise)
-                            },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = Blue,
-                                uncheckedColor = SurfaceVariant,
-                                checkmarkColor = Color.White
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = {
+                                    if (it) selectedExercises.add(exercise)
+                                    else selectedExercises.remove(exercise)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Blue,
+                                    uncheckedColor = SurfaceVariant,
+                                    checkmarkColor = Color.White
+                                )
                             )
-                        )
-                        Text(
-                            text = exercise, 
-                            color = if (isSelected) Color.White else Color.Gray,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                            Text(
+                                text = exercise, 
+                                color = if (isSelected) Color.White else Color.Gray,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { /* Bearbeitungs-Logik hier einfügen */ },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit $exercise",
+                                tint = if (isSelected) Blue else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
