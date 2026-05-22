@@ -33,8 +33,6 @@ fun MyPlansScreen(
     val plans = remember { mutableStateListOf("Bulk Phase 1", "Summer Cut", "Strength Focus") }
     var planToDelete by remember { mutableStateOf<String?>(null) }
 
-    var planToDelete by remember { mutableStateOf<String?>(null) }
-
     Scaffold(
         topBar = { LightWeightHeader() },
         bottomBar = {
