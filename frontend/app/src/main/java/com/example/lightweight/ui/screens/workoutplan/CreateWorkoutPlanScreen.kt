@@ -182,7 +182,7 @@ fun WorkoutPlanForm(
                                 )
                             )
                             Text(
-                                text = exercise,
+                                text = exercise, 
                                 color = if (isSelected) Color.White else Color.Gray,
                                 modifier = Modifier.padding(start = 8.dp)
                             )

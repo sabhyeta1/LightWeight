@@ -33,6 +33,8 @@ fun MyPlansScreen(
     val plans = remember { mutableStateListOf("Bulk Phase 1", "Summer Cut", "Strength Focus") }
     var planToDelete by remember { mutableStateOf<String?>(null) }
 
+    var planToDelete by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
         topBar = { LightWeightHeader() },
         bottomBar = {
@@ -87,6 +89,7 @@ fun MyPlansScreen(
         }
     }
 
+    // Bestätigungs-Dialog — erscheint nur wenn planToDelete gesetzt ist
     planToDelete?.let { plan ->
         AlertDialog(
             onDismissRequest = { planToDelete = null },
