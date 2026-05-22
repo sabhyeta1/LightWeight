@@ -23,7 +23,6 @@ import com.example.lightweight.ui.theme.Background
 import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.Surface
 import com.example.lightweight.ui.theme.SurfaceVariant
-
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.lightweight.ui.theme.LightWeightTheme
 
@@ -31,10 +30,11 @@ import com.example.lightweight.ui.theme.LightWeightTheme
 fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
     onCancel: () -> Unit = {},
+    onEditExercise: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = { LightWeightHeader() },
-        bottomBar = { LightWeightBottomBar(currentScreen = "Create Plan") },
+        bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
         containerColor = Background
     ) { paddingValues ->
         Column(
@@ -53,7 +53,8 @@ fun CreateWorkoutPlanScreen(
 
             WorkoutPlanForm(
                 onSave = { _, _, _, _ -> onSave() },
-                onCancel = onCancel
+                onCancel = onCancel,
+                onEditExercise = onEditExercise
             )
         }
     }
@@ -67,13 +68,14 @@ fun WorkoutPlanForm(
     initialSelectedExercises: List<String> = emptyList(),
     onSave: (String, String, List<String>, Boolean) -> Unit = { _, _, _, _ -> },
     onCancel: () -> Unit = {},
+    onEditExercise: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var planName by remember { mutableStateOf(initialName) }
     var planDescription by remember { mutableStateOf(initialDescription) }
     var searchQuery by remember { mutableStateOf("") }
     var isPublic by remember { mutableStateOf(initialIsPublic) }
-    
+
     val allExercises = remember {
         listOf(
             "Bench Press", "Squat", "Deadlift", "Pull Up",
@@ -82,7 +84,6 @@ fun WorkoutPlanForm(
         )
     }
     val selectedExercises = remember { mutableStateListOf<String>().apply { addAll(initialSelectedExercises) } }
-    
     val filteredExercises = remember(searchQuery) {
         allExercises.filter { it.contains(searchQuery, ignoreCase = true) }
     }
@@ -131,7 +132,6 @@ fun WorkoutPlanForm(
             fontSize = 18.sp
         )
 
-        // Exercise Selection Box
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -158,9 +158,7 @@ fun WorkoutPlanForm(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(filteredExercises) { exercise ->
                     val isSelected = selectedExercises.contains(exercise)
                     Row(
@@ -190,7 +188,7 @@ fun WorkoutPlanForm(
                             )
                         }
                         IconButton(
-                            onClick = { /* Bearbeitungs-Logik hier einfügen */ },
+                            onClick = { onEditExercise(exercise) },
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
@@ -205,7 +203,6 @@ fun WorkoutPlanForm(
             }
         }
 
-        // Public Toggle
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -224,7 +221,6 @@ fun WorkoutPlanForm(
             )
         }
 
-        // Buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()

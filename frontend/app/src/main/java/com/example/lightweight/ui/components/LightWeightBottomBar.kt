@@ -15,28 +15,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.lightweight.navigation.Screen
 import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.Surface
 
 @Composable
-fun LightWeightBottomBar(currentScreen: String) {
+fun LightWeightBottomBar(
+    currentScreen: String,
+    onNavigateTo: (String) -> Unit = {}
+) {
     NavigationBar(
         containerColor = Surface,
         contentColor = Color.Gray,
         tonalElevation = 8.dp
     ) {
         val items = listOf(
-            BottomNavItem("Community", Icons.Default.Search),
-            BottomNavItem("My Plans", Icons.Default.List),
-            BottomNavItem("Calendar", Icons.Default.DateRange),
-            BottomNavItem("Profile", Icons.Default.Person)
+            BottomNavItem("Community", Icons.Default.Search, Screen.Community.route),
+            BottomNavItem("My Plans", Icons.Default.List, Screen.MyPlans.route),
+            BottomNavItem("Calendar", Icons.Default.DateRange, Screen.Calendar.route),
+            BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
         )
 
         items.forEach { item ->
             val isSelected = currentScreen == item.label
             NavigationBarItem(
                 selected = isSelected,
-                onClick = { /* Navigation hier einfügen */ },
+                onClick = { if (!isSelected) onNavigateTo(item.route) },
                 icon = {
                     Icon(
                         imageVector = item.icon,
@@ -59,4 +63,4 @@ fun LightWeightBottomBar(currentScreen: String) {
     }
 }
 
-data class BottomNavItem(val label: String, val icon: ImageVector)
+data class BottomNavItem(val label: String, val icon: ImageVector, val route: String)
