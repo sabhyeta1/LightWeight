@@ -12,6 +12,15 @@ app.use(
 );
 
 app.use(express.json());
+
+//debug
+app.use((req, res, next) => {
+    res.on('finish', () => {
+        console.log(`${req.method} ${req.url} → ${res.statusCode}`);
+    });
+    next();
+});
+
 app.use('/api', apiRoutes);
 
 app.get("/", (req, res) => {
