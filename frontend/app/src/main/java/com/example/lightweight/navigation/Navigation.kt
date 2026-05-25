@@ -17,11 +17,13 @@ import com.example.lightweight.ui.screens.workoutplan.EditWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.ExerciseDetailScreen
 import com.example.lightweight.ui.screens.calendar.CalendarScreen
 import com.example.lightweight.ui.screens.profile.ProfileScreen
+import com.example.lightweight.ui.viewmodel.AuthViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 
 @Composable
 fun Navigation(navController: NavHostController) {
     val workoutPlanViewModel: WorkoutPlanViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -136,7 +138,14 @@ fun Navigation(navController: NavHostController) {
 
         composable(Screen.Profile.route) {
             ProfileScreen(
-                onNavigateTo = { route -> navController.navigate(route) }
+                onNavigateTo = { route -> navController.navigate(route)},
+                onLogout = {
+                    authViewModel.logout()
+                    workoutPlanViewModel.clearPlans()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
     }

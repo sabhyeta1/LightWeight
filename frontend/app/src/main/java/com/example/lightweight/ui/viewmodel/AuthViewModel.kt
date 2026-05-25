@@ -69,6 +69,13 @@ class AuthViewModel (application: Application) : AndroidViewModel(application){ 
         }
     }
 
+    fun logout() {
+        viewModelScope.launch {
+            tokenStore.clearToken()
+            _uiState.value = AuthUiState()
+        }
+    }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
