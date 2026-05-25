@@ -1,7 +1,11 @@
 package com.example.lightweight.ui.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lightweight.data.local.TokenStore
+import com.example.lightweight.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -12,10 +16,14 @@ data class AuthUiState(
     val isSuccess: Boolean = false
 )
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel (application: Application) : AndroidViewModel(application){ //: ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState
+
+    // hinzugefügt
+    private val repository = AuthRepository()
+    private val tokenStore = TokenStore(application)
 
     fun login(username: String, password: String) {
         if (username.isBlank() || password.isBlank()) {
@@ -25,7 +33,15 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
             // TODO: wire to AuthService -> AuthRepository -> backend
-            _uiState.value = AuthUiState(isSuccess = true)
+            repository.login(username, password)
+                .onSuccess { token ->
+                    tokenStore.saveToken(token)
+                    _uiState.value = AuthUiState(isSuccess = true)
+                }
+                .onFailure { error ->
+                    _uiState.value = AuthUiState(errorMessage = error.message ?: "Login failed")
+                }
+            //_uiState.value = AuthUiState(isSuccess = true)
         }
     }
 
@@ -41,7 +57,15 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
             // TODO: wire to AuthService -> AuthRepository -> backend
-            _uiState.value = AuthUiState(isSuccess = true)
+            repository.register(username, password, displayName)
+                .onSuccess {
+                    _uiState.value = AuthUiState(isSuccess = true)
+                }
+                .onFailure { error ->
+                    _uiState.value = AuthUiState(errorMessage = error.message ?: "Registration failed")
+                }
+
+            //_uiState.value = AuthUiState(isSuccess = true)
         }
     }
 
