@@ -28,6 +28,12 @@ interface ApiService {
         @Body body: CreateWorkoutPlanRequest
     ): WorkoutPlanResponse
 
+    @GET("api/workout-plan/{id}")
+    suspend fun getWorkoutPlanDetails(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): WorkoutPlanDetailResponse
+
     @DELETE("api/workout-plan/{id}")
     suspend fun deleteWorkoutPlan(
         @Header("Authorization") token: String,

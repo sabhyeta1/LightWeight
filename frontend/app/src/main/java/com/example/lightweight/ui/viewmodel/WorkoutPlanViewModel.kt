@@ -7,6 +7,7 @@ import com.example.lightweight.data.local.TokenStore
 import com.example.lightweight.data.remote.CreateWorkoutPlanRequest
 import com.example.lightweight.data.remote.RetrofitClient
 import com.example.lightweight.data.remote.WorkoutPlanResponse
+import com.example.lightweight.data.remote.WorkoutPlanDetailResponse
 import com.example.lightweight.data.repository.WorkoutPlanRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 data class WorkoutPlanUiState(
     val isLoading: Boolean = false,
     val plans: List<WorkoutPlanResponse> = emptyList(),
+    val currentPlanDetails: WorkoutPlanDetailResponse? = null,
     val errorMessage: String? = null
 )
 
@@ -78,6 +80,20 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
                 .onSuccess { loadPlans() }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                }
+        }
+    }
+
+    fun loadPlanDetails(id: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, currentPlanDetails = null)
+            val token = tokenStore.getToken().first() ?: return@launch
+            repository.getWorkoutPlanDetails(token, id)
+                .onSuccess { details ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, currentPlanDetails = details)
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = error.message)
                 }
         }
     }

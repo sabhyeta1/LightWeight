@@ -1,6 +1,6 @@
 package com.example.lightweight.navigation
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -15,10 +15,12 @@ import com.example.lightweight.ui.screens.workoutplan.MyPlansScreen
 import com.example.lightweight.ui.screens.workoutplan.CreateWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.EditWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.ExerciseDetailScreen
+import com.example.lightweight.ui.screens.workoutplan.WorkoutPlanDetailScreen
 import com.example.lightweight.ui.screens.calendar.CalendarScreen
 import com.example.lightweight.ui.screens.profile.ProfileScreen
 import com.example.lightweight.ui.viewmodel.AuthViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 
 @Composable
 fun Navigation(navController: NavHostController) {
@@ -64,11 +66,37 @@ fun Navigation(navController: NavHostController) {
             MyPlansScreen(
                 viewModel = workoutPlanViewModel,
                 onNavigateToCreate = { navController.navigate(Screen.CreatePlan.route) },
+                onViewPlan = { planId, planName ->
+                    navController.navigate(Screen.WorkoutPlanDetail.createRoute(planId, planName))
+                },
                 onEditPlan = { planId, planName ->
                     navController.navigate(Screen.EditPlan.createRoute(planId, planName))
                 },
                 onDeletePlan = {},
                 onNavigateTo = { route -> navController.navigate(route) }
+            )
+        }
+        
+        composable(
+            route = Screen.WorkoutPlanDetail.route,
+            arguments = listOf(
+                navArgument("planId") { type = NavType.IntType },
+                navArgument("planName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val planId = backStackEntry.arguments?.getInt("planId") ?: 0
+            val uiState by workoutPlanViewModel.uiState.collectAsState()
+
+            LaunchedEffect(planId) {
+                workoutPlanViewModel.loadPlanDetails(planId)
+            }
+            
+            WorkoutPlanDetailScreen(
+                plan = uiState.currentPlanDetails,
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                onNavigateTo = { route: String -> navController.navigate(route) },
+                onBack = { navController.popBackStack() }
             )
         }
         composable(
@@ -102,21 +130,7 @@ fun Navigation(navController: NavHostController) {
                 }
             )
         }
-
-//        composable(
-//            route = Screen.EditPlan.route,
-//            arguments = listOf(navArgument("planName") { type = NavType.StringType })
-//        ) { backStackEntry ->
-//            val planName = backStackEntry.arguments?.getString("planName") ?: ""
-//            EditWorkoutPlanScreen(
-//                planName = planName,
-//                onCancel = { navController.popBackStack() },
-//                onSaveSuccess = { navController.popBackStack() },
-//                onEditExercise = { exerciseName ->
-//                    navController.navigate(Screen.ExerciseDetail.createRoute(exerciseName))
-//                }
-//            )
-//        }
+        
 
         composable(
             route = Screen.ExerciseDetail.route,

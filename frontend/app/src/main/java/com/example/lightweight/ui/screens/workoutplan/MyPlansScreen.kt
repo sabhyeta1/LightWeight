@@ -1,6 +1,7 @@
 package com.example.lightweight.ui.screens.workoutplan
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +30,7 @@ import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 @Composable
 fun MyPlansScreen(
     onNavigateToCreate: () -> Unit = {},
+    onViewPlan: (Int, String) -> Unit = { _, _ -> },
     onEditPlan: (Int, String) -> Unit = { _, _ -> },
     onDeletePlan: (String) -> Unit = {},
     onNavigateTo: (String) -> Unit = {},
@@ -84,6 +86,7 @@ fun MyPlansScreen(
                         items(uiState.plans) { plan ->
                             PlanItem(
                                 name = plan.name,
+                                onClick = { onViewPlan(plan.id, plan.name) },
                                 onEdit = { onEditPlan(plan.id, plan.name) },
                                 onDelete = { planToDelete = plan }
                             )
@@ -91,19 +94,6 @@ fun MyPlansScreen(
                     }
                 }
             }
-
-//            LazyColumn(
-//                modifier = Modifier.weight(1f),
-//                verticalArrangement = Arrangement.spacedBy(12.dp)
-//            ) {
-//                items(plans) { plan ->
-//                    PlanItem(
-//                        name = plan,
-//                        onEdit = { onEditPlan(plan) },
-//                        onDelete = { planToDelete = plan }
-//                    )
-//                }
-//            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -151,11 +141,12 @@ fun MyPlansScreen(
 }
 
 @Composable
-fun PlanItem(name: String, onEdit: () -> Unit, onDelete: () -> Unit) {
+fun PlanItem(name: String, onClick: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Surface, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
