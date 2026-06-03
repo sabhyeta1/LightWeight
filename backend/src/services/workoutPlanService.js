@@ -41,4 +41,29 @@ const deleteWorkoutPlan = async (planId, userId) => {
   return await workoutPlanRepository.deletePlan(planId, userId);
 };
 
-module.exports = { createWorkoutPlan, getWorkoutPlansByUser, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan};
+// FR-07: add exercise to plan
+const addExerciseToPlan = async (planId, userId, exerciseId, order) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  if (!exerciseId) throw new Error("exercise_id is required");
+  const plan = await workoutPlanRepository.findPlanByIdAndUser(planId, userId);
+  if (!plan) throw new Error("Plan not found or not yours");
+  return await workoutPlanRepository.addExercise(planId, exerciseId, order ?? 0);
+};
+
+// FR-08: replace sets for an exercise entry
+const updateExerciseSets = async (planId, userId, ewpId, sets) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  const plan = await workoutPlanRepository.findPlanByIdAndUser(planId, userId);
+  if (!plan) throw new Error("Plan not found or not yours");
+  return await workoutPlanRepository.replaceSets(ewpId, sets);
+};
+
+// remove exercise from plan
+const removeExerciseFromPlan = async (planId, userId, ewpId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  const plan = await workoutPlanRepository.findPlanByIdAndUser(planId, userId);
+  if (!plan) throw new Error("Plan not found or not yours");
+  return await workoutPlanRepository.removeExercise(ewpId);
+};
+
+module.exports = { createWorkoutPlan, getWorkoutPlansByUser, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan };

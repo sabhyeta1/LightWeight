@@ -24,17 +24,6 @@ async function findPlansByUser(userId) {
   return rows.map((row) => new WorkoutPlan(row));
 }
 
-/*async function findPlanByIdAndUser(planId, userId) {
-  const sql = `
-    SELECT id, owner_id, name, description, is_published
-    FROM workout_plan
-    WHERE id = $1 AND owner_id = $2
-  `;
-
-  const { rows } = await db.query(sql, [planId, userId]);
-  return rows[0] ? new WorkoutPlan(rows[0]) : null;
-}*/
-
 async function findPlanByIdAndUser(planId, userId) {
   // Query 1: Plan + Exercises
   const planSql = `
@@ -91,7 +80,6 @@ async function updatePlan(planId, userId, name, description, isPublished) {
   `;
 
   const { rows } = await db.query(sql, [planId, userId, name, description, isPublished]);
-
   return rows[0] ? new WorkoutPlan(rows[0]) : null;
 }
 
@@ -106,4 +94,46 @@ async function deletePlan(planId, userId) {
   return rows.length > 0;
 }
 
-module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan };
+// FR-07: add exercise to plan
+async function addExercise(planId, exerciseId, order) {
+  const sql = `
+    INSERT INTO exercises_workout_plan (workout_plan_id, exercise_id, "order")
+    VALUES ($1, $2, $3)
+    RETURNING id, workout_plan_id, exercise_id, "order"
+  `;
+  const { rows } = await db.query(sql, [planId, exerciseId, order]);
+  return rows[0];
+}
+
+// FR-08: replace all sets for an exercise entry
+async function replaceSets(ewpId, sets) {
+  await db.query("DELETE FROM exercise_sets WHERE ewp_id = $1", [ewpId]);
+  if (!sets || sets.length === 0) return [];
+
+  const inserted = [];
+  for (const s of sets) {
+    const sql = `
+      INSERT INTO exercise_sets (ewp_id, set_number, reps, weight, machine_settings, is_drop_set)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    const { rows } = await db.query(sql, [
+      ewpId,
+      s.set_number,
+      s.reps,
+      s.weight,
+      s.machine_settings ?? null,
+      s.is_drop_set ?? false,
+    ]);
+    inserted.push(rows[0]);
+  }
+  return inserted;
+}
+
+// remove exercise (and its sets) from plan
+async function removeExercise(ewpId) {
+  await db.query("DELETE FROM exercise_sets WHERE ewp_id = $1", [ewpId]);
+  await db.query("DELETE FROM exercises_workout_plan WHERE id = $1", [ewpId]);
+}
+
+module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan, addExercise, replaceSets, removeExercise };
