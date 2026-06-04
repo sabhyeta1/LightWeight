@@ -1,6 +1,7 @@
 package com.example.lightweight.ui.screens.workoutplan
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,22 +17,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lightweight.data.remote.WorkoutPlanResponse
 import com.example.lightweight.ui.components.LightWeightHeader
 import com.example.lightweight.ui.components.LightWeightBottomBar
 import com.example.lightweight.ui.theme.Background
 import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.Surface
 import com.example.lightweight.ui.theme.LightWeightTheme
+import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 
 @Composable
 fun MyPlansScreen(
     onNavigateToCreate: () -> Unit = {},
-    onEditPlan: (String) -> Unit = {},
+    onViewPlan: (Int, String) -> Unit = { _, _ -> },
+    onEditPlan: (Int, String) -> Unit = { _, _ -> },
     onDeletePlan: (String) -> Unit = {},
-    onNavigateTo: (String) -> Unit = {}
+    onNavigateTo: (String) -> Unit = {},
+    viewModel: WorkoutPlanViewModel = viewModel()
 ) {
-    val plans = remember { mutableStateListOf("Bulk Phase 1", "Summer Cut", "Strength Focus") }
-    var planToDelete by remember { mutableStateOf<String?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+    var planToDelete by remember { mutableStateOf<WorkoutPlanResponse?>(null) }
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -56,17 +62,36 @@ fun MyPlansScreen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(plans) { plan ->
-                    PlanItem(
-                        name = plan,
-                        onEdit = { onEditPlan(plan) },
-                        onDelete = { planToDelete = plan }
-                    )
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Blue)
+                    }
+                }
+                uiState.errorMessage != null -> {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text(text = uiState.errorMessage!!, color = Color.Red)
+                    }
+                }
+                uiState.plans.isEmpty() -> {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        Text(text = "No plans yet. Create your first one!", color = Color.Gray)
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(uiState.plans) { plan ->
+                            PlanItem(
+                                name = plan.name,
+                                onClick = { onViewPlan(plan.id, plan.name) },
+                                onEdit = { onEditPlan(plan.id, plan.name) },
+                                onDelete = { planToDelete = plan }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -94,13 +119,12 @@ fun MyPlansScreen(
             containerColor = Surface,
             titleContentColor = Color.White,
             textContentColor = Color.Gray,
-            title = { Text("Delete \"$plan\"?") },
+            title = { Text("Delete \"${plan.name}\"?") },
             text = { Text("This plan will be permanently removed. This cannot be undone.") },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        plans.remove(plan)
-                        onDeletePlan(plan)
+                        viewModel.deletePlan(plan.id)
                         planToDelete = null
                     }
                 ) {
@@ -117,11 +141,12 @@ fun MyPlansScreen(
 }
 
 @Composable
-fun PlanItem(name: String, onEdit: () -> Unit, onDelete: () -> Unit) {
+fun PlanItem(name: String, onClick: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Surface, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween

@@ -25,14 +25,50 @@ async function findPlansByUser(userId) {
 }
 
 async function findPlanByIdAndUser(planId, userId) {
-  const sql = `
-    SELECT id, owner_id, name, description, is_published
-    FROM workout_plan
-    WHERE id = $1 AND owner_id = $2
+  // Query 1: Plan + Exercises
+  const planSql = `
+    SELECT wp.id, wp.name, wp.description, wp.is_published,
+           ewp.id AS ewp_id, ewp.order,
+           e.id AS exercise_id, e.name AS exercise_name, e.photo_url
+    FROM workout_plan wp
+    LEFT JOIN exercises_workout_plan ewp ON ewp.workout_plan_id = wp.id
+    LEFT JOIN exercises e ON e.id = ewp.exercise_id
+    WHERE wp.id = $1 AND wp.owner_id = $2
+    ORDER BY ewp.order
   `;
+  const { rows: planRows } = await db.query(planSql, [planId, userId]);
+  if (planRows.length === 0) return null;
 
-  const { rows } = await db.query(sql, [planId, userId]);
-  return rows[0] ? new WorkoutPlan(rows[0]) : null;
+  // Query 2: alle Sets für diesen Plan
+  const setsSql = `
+    SELECT es.id, es.ewp_id, es.set_number, es.reps,
+           es.weight, es.machine_settings, es.is_drop_set
+    FROM exercise_sets es
+    INNER JOIN exercises_workout_plan ewp ON ewp.id = es.ewp_id
+    WHERE ewp.workout_plan_id = $1
+    ORDER BY es.set_number
+  `;
+  const { rows: setRows } = await db.query(setsSql, [planId]);
+
+  // Zusammenbauen
+  const plan = {
+    id: planRows[0].id,
+    name: planRows[0].name,
+    description: planRows[0].description,
+    is_published: planRows[0].is_published,
+    exercises: planRows
+      .filter(row => row.ewp_id !== null)
+      .map(row => ({
+        ewp_id: row.ewp_id,
+        order: row.order,
+        exercise_id: row.exercise_id,
+        name: row.exercise_name,
+        photo_url: row.photo_url,
+        sets: setRows.filter(s => s.ewp_id === row.ewp_id)
+      }))
+  };
+
+  return plan;
 }
 
 async function updatePlan(planId, userId, name, description, isPublished) {
@@ -44,7 +80,6 @@ async function updatePlan(planId, userId, name, description, isPublished) {
   `;
 
   const { rows } = await db.query(sql, [planId, userId, name, description, isPublished]);
-
   return rows[0] ? new WorkoutPlan(rows[0]) : null;
 }
 
@@ -59,4 +94,46 @@ async function deletePlan(planId, userId) {
   return rows.length > 0;
 }
 
-module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan };
+// FR-07: add exercise to plan
+async function addExercise(planId, exerciseId, order) {
+  const sql = `
+    INSERT INTO exercises_workout_plan (workout_plan_id, exercise_id, "order")
+    VALUES ($1, $2, $3)
+    RETURNING id, workout_plan_id, exercise_id, "order"
+  `;
+  const { rows } = await db.query(sql, [planId, exerciseId, order]);
+  return rows[0];
+}
+
+// FR-08: replace all sets for an exercise entry
+async function replaceSets(ewpId, sets) {
+  await db.query("DELETE FROM exercise_sets WHERE ewp_id = $1", [ewpId]);
+  if (!sets || sets.length === 0) return [];
+
+  const inserted = [];
+  for (const s of sets) {
+    const sql = `
+      INSERT INTO exercise_sets (ewp_id, set_number, reps, weight, machine_settings, is_drop_set)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
+    `;
+    const { rows } = await db.query(sql, [
+      ewpId,
+      s.set_number,
+      s.reps,
+      s.weight,
+      s.machine_settings ?? null,
+      s.is_drop_set ?? false,
+    ]);
+    inserted.push(rows[0]);
+  }
+  return inserted;
+}
+
+// remove exercise (and its sets) from plan
+async function removeExercise(ewpId) {
+  await db.query("DELETE FROM exercise_sets WHERE ewp_id = $1", [ewpId]);
+  await db.query("DELETE FROM exercises_workout_plan WHERE id = $1", [ewpId]);
+}
+
+module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan, addExercise, replaceSets, removeExercise };

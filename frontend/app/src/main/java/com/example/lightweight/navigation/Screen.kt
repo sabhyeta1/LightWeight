@@ -9,8 +9,11 @@ sealed class Screen(val route: String) {
     object Calendar : Screen("calendar")
     object Profile : Screen("profile")
     object CreatePlan : Screen("create_plan")
-    object EditPlan : Screen("edit_plan/{planName}") {
-        fun createRoute(planName: String) = "edit_plan/$planName"
+    object WorkoutPlanDetail : Screen("workout_plan_detail/{planId}/{planName}") {
+        fun createRoute(planId: Int, planName: String) = "workout_plan_detail/$planId/$planName"
+    }
+    object EditPlan : Screen("edit_plan/{planId}/{planName}") {
+        fun createRoute(planId: Int, planName: String) = "edit_plan/$planId/$planName"
     }
     object ExerciseDetail : Screen("exercise_detail/{exerciseName}") {
         fun createRoute(exerciseName: String) = "exercise_detail/$exerciseName"

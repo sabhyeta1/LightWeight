@@ -24,13 +24,17 @@ import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.Surface
 import com.example.lightweight.ui.theme.SurfaceVariant
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lightweight.ui.theme.LightWeightTheme
+import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 
+/*
 @Composable
 fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
     onCancel: () -> Unit = {},
     onEditExercise: (String) -> Unit = {},
+    viewModel: WorkoutPlanViewModel = viewModel()
 ) {
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -52,7 +56,55 @@ fun CreateWorkoutPlanScreen(
             )
 
             WorkoutPlanForm(
-                onSave = { _, _, _, _ -> onSave() },
+                onSave = { name, description, exercises, isPublic ->
+                    viewModel.createPlan(name, description, isPublic)
+                    onSave()
+                },
+                onCancel = onCancel,
+                onEditExercise = onEditExercise
+            )
+        }
+    }
+}*/
+@Composable
+fun CreateWorkoutPlanScreen(
+    onSave: () -> Unit = {},
+    onCancel: () -> Unit = {},
+    onEditExercise: (String) -> Unit = {},
+    viewModel: WorkoutPlanViewModel = viewModel()
+) {
+    //val uiState by viewModel.uiState.collectAsState()
+
+//    LaunchedEffect(uiState.plans) {
+//        if (uiState.plans.isNotEmpty()) {
+//            onSave()
+//        }
+//    }
+
+    Scaffold(
+        topBar = { LightWeightHeader() },
+        bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
+        containerColor = Background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "New Plan",
+                style = MaterialTheme.typography.headlineLarge,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+
+            WorkoutPlanForm(
+                onSave = { name, description, exercises, isPublic ->
+                    viewModel.createPlan(name, description, isPublic)
+                    onSave()
+                },
                 onCancel = onCancel,
                 onEditExercise = onEditExercise
             )

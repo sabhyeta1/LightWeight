@@ -9,29 +9,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lightweight.ui.components.LightWeightBottomBar
 import com.example.lightweight.ui.components.LightWeightHeader
 import com.example.lightweight.ui.theme.Background
 import com.example.lightweight.ui.theme.LightWeightTheme
+import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun EditWorkoutPlanScreen(
-    planName: String = "Bulk Phase 1",
-    planDescription: String = "My current bulking routine",
-    isPublic: Boolean = true,
-    selectedExercises: List<String> = listOf("Bench Press", "Squat", "Deadlift"),
+    planId: Int = 0,
+    planName: String = "",
     onCancel: () -> Unit = {},
     onSaveSuccess: () -> Unit = {},
-    onEditExercise: (String) -> Unit = {}
+    onEditExercise: (String) -> Unit = {},
+    viewModel: WorkoutPlanViewModel = viewModel()
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+//    val snackbarHostState = remember { SnackbarHostState() }
+//    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
+    val plan = uiState.plans.firstOrNull { it.id == planId }
 
     Scaffold(
         topBar = { LightWeightHeader() },
         bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Background
     ) { paddingValues ->
         Column(
@@ -57,18 +59,31 @@ fun EditWorkoutPlanScreen(
             }
 
             WorkoutPlanForm(
-                initialName = planName,
-                initialDescription = planDescription,
-                initialIsPublic = isPublic,
-                initialSelectedExercises = selectedExercises,
+                initialName = plan?.name ?: planName,
+                initialDescription = plan?.description ?: "",
+                initialIsPublic = plan?.is_published ?: false,
                 onCancel = onCancel,
                 onEditExercise = onEditExercise,
-                onSave = { _, _, _, _ ->
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Saved changes")
-                        onSaveSuccess()
-                    }
+                onSave = { name, description, _, isPublic ->
+                    viewModel.updatePlan(planId, name, description, isPublic)
+                    onSaveSuccess()
                 }
+//                initialName = planName,
+//                //initialDescription = planDescription,
+//                //initialIsPublic = isPublic,
+//                //initialSelectedExercises = selectedExercises,
+//                onCancel = onCancel,
+//                onEditExercise = onEditExercise,
+//                onSave = { name, description, _, isPublic ->
+//                    viewModel.updatePlan(planId, name, description, isPublic)
+//                    onSaveSuccess()
+//                }
+//                onSave = { _, _, _, _ ->
+//                    scope.launch {
+//                        snackbarHostState.showSnackbar("Saved changes")
+//                        onSaveSuccess()
+//                    }
+//                }
             )
         }
     }

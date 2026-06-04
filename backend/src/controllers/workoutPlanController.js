@@ -76,4 +76,44 @@ const deleteWorkoutPlan = async (req, res) => {
   }
 };
 
-module.exports = {createWorkoutPlan, getWorkoutPlans, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan}
+// FR-07: add exercise to plan
+const addExerciseToPlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    const { exercise_id, order } = req.body;
+    const result = await workoutPlanService.addExerciseToPlan(planId, userId, exercise_id, order);
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// FR-08: update sets for an exercise in a plan
+const updateExerciseSets = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    const ewpId = Number(req.params.ewpId);
+    const { sets } = req.body; // array of { set_number, reps, weight, machine_settings }
+    const result = await workoutPlanService.updateExerciseSets(planId, userId, ewpId, sets);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// remove exercise from plan
+const removeExerciseFromPlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    const ewpId = Number(req.params.ewpId);
+    await workoutPlanService.removeExerciseFromPlan(planId, userId, ewpId);
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+module.exports = {createWorkoutPlan, getWorkoutPlans, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan}
