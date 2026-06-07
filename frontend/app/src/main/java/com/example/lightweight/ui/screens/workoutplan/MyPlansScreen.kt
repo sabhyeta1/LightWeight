@@ -26,6 +26,7 @@ import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.Surface
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import androidx.compose.runtime.*
 
 @Composable
 fun MyPlansScreen(
@@ -38,6 +39,10 @@ fun MyPlansScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var planToDelete by remember { mutableStateOf<WorkoutPlanResponse?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPlans()
+    }
 
     Scaffold(
         topBar = { LightWeightHeader() },

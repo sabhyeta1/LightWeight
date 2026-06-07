@@ -57,6 +57,15 @@ data class CreateWorkoutPlanRequest(
     val is_published: Boolean = false
 )
 
+data class CommunityPlanResponse(
+    val id: Int,
+    val owner_id: Int,
+    val name: String,
+    val description: String?,
+    val is_published: Boolean,
+    val owner_name: String
+)
+
 // Calendar
 
 data class CalendarSessionResponse(
