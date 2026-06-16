@@ -16,7 +16,12 @@ router.delete("/:id", requireAuth, workoutPlanController.deleteWorkoutPlan);
 router.post('/:id/exercise', requireAuth, workoutPlanController.addExerciseToPlan);
 // FR-08: replace all sets for an exercise entry in a plan
 router.put('/:id/exercise/:ewpId/sets', requireAuth, workoutPlanController.updateExerciseSets);
+router.get("/:id/exercise/:ewpId/sets", requireAuth, workoutPlanController.getExerciseSets);
 // remove an exercise from a plan
 router.delete('/:id/exercise/:ewpId', requireAuth, workoutPlanController.removeExerciseFromPlan);
+
+// publish or unpublish "community" plan
+router.post("/:id/publish", requireAuth, workoutPlanController.publishWorkoutPlan);
+router.post("/:id/unpublish", requireAuth, workoutPlanController.unpublishWorkoutPlan);
 
 module.exports = router;

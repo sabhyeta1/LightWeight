@@ -116,4 +116,52 @@ const removeExerciseFromPlan = async (req, res) => {
   }
 };
 
-module.exports = {createWorkoutPlan, getWorkoutPlans, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan}
+const getExerciseSets = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    const ewpId = Number(req.params.ewpId);
+
+    const sets = await workoutPlanService.getExerciseSets(planId, ewpId, userId);
+
+    res.status(200).json(sets);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const publishWorkoutPlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+
+    const plan = await workoutPlanService.publishWorkoutPlan(planId, userId);
+
+    if (!plan) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    res.status(200).json(plan);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const unpublishWorkoutPlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+
+    const plan = await workoutPlanService.unpublishWorkoutPlan(planId, userId);
+
+    if (!plan) {
+      return res.status(404).json({ error: "Workout plan not found" });
+    }
+
+    res.status(200).json(plan);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+module.exports = {createWorkoutPlan, getWorkoutPlans, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan, getExerciseSets, publishWorkoutPlan, unpublishWorkoutPlan}

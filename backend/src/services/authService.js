@@ -62,4 +62,8 @@ async function login(username, password) {
   return { user, token };
 }
 
-module.exports = { register, login };
+async function getMe(userId) {
+  return await userRepository.findUserById(userId);
+}
+
+module.exports = { register, login, getMe };
