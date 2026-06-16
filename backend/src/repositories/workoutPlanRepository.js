@@ -136,4 +136,39 @@ async function removeExercise(ewpId) {
   await db.query("DELETE FROM exercises_workout_plan WHERE id = $1", [ewpId]);
 }
 
-module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan, addExercise, replaceSets, removeExercise };
+async function getExerciseSets(planId, ewpId, userId) {
+  const sql = `
+    SELECT 
+      es.id,
+      es.ewp_id,
+      es.set_number,
+      es.reps,
+      es.weight,
+      es.machine_settings,
+      es.is_drop_set
+    FROM exercise_sets es
+    JOIN exercises_workout_plan ewp ON ewp.id = es.ewp_id
+    JOIN workout_plan wp ON wp.id = ewp.workout_plan_id
+    WHERE wp.id = $1
+      AND ewp.id = $2
+      AND wp.owner_id = $3
+    ORDER BY es.set_number ASC
+  `;
+
+  const { rows } = await db.query(sql, [planId, ewpId, userId]);
+  return rows;
+}
+
+async function setPublished(planId, userId, isPublished) {
+  const sql = `
+    UPDATE workout_plan
+    SET is_published = $3
+    WHERE id = $1 AND owner_id = $2
+    RETURNING id, owner_id, name, description, is_published
+  `;
+
+  const { rows } = await db.query(sql, [planId, userId, isPublished]);
+  return rows[0] ? new WorkoutPlan(rows[0]) : null;
+}
+
+module.exports = { createPlan, findPlansByUser, findPlanByIdAndUser, updatePlan, deletePlan, addExercise, replaceSets, removeExercise, getExerciseSets, setPublished };

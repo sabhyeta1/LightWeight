@@ -66,4 +66,21 @@ const removeExerciseFromPlan = async (planId, userId, ewpId) => {
   return await workoutPlanRepository.removeExercise(ewpId);
 };
 
-module.exports = { createWorkoutPlan, getWorkoutPlansByUser, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan };
+const getExerciseSets = async (planId, ewpId, userId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  if (!Number.isInteger(ewpId)) throw new Error("Invalid exercise entry id");
+
+  return await workoutPlanRepository.getExerciseSets(planId, ewpId, userId);
+};
+
+const publishWorkoutPlan = async (planId, userId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  return await workoutPlanRepository.setPublished(planId, userId, true);
+};
+
+const unpublishWorkoutPlan = async (planId, userId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  return await workoutPlanRepository.setPublished(planId, userId, false);
+};
+
+module.exports = { createWorkoutPlan, getWorkoutPlansByUser, getWorkoutPlanById, updateWorkoutPlan, deleteWorkoutPlan, addExerciseToPlan, updateExerciseSets, removeExerciseFromPlan, getExerciseSets, publishWorkoutPlan, unpublishWorkoutPlan };
