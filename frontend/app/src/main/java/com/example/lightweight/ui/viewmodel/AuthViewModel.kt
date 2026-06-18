@@ -58,7 +58,8 @@ class AuthViewModel (application: Application) : AndroidViewModel(application){ 
             _uiState.value = AuthUiState(isLoading = true)
             // TODO: wire to AuthService -> AuthRepository -> backend
             repository.register(username, password, displayName)
-                .onSuccess {
+                .onSuccess { token ->
+                    tokenStore.saveToken(token)
                     _uiState.value = AuthUiState(isSuccess = true)
                 }
                 .onFailure { error ->

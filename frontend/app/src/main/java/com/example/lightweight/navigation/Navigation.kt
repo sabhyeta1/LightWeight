@@ -84,7 +84,12 @@ fun Navigation(navController: NavHostController) {
         composable(Screen.Register.route) {
             RegisterScreen(
                 onNavigateToLogin = { navController.popBackStack() },
-                onRegisterSuccess = { navController.popBackStack() }
+                onRegisterSuccess = {
+                    workoutPlanViewModel.loadPlans()
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
             )
         }
 
