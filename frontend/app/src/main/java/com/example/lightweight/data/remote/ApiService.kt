@@ -5,7 +5,6 @@ import retrofit2.http.*
 interface ApiService {
 
     // Auth
-
     @POST("api/auth/register")
     suspend fun register(@Body body: RegisterRequest): RegisterResponse
 
@@ -13,7 +12,6 @@ interface ApiService {
     suspend fun login(@Body body: LoginRequest): LoginResponse
 
     // Workout Plans
-
     @GET("api/workout-plan")
     suspend fun getWorkoutPlans(@Header("Authorization") token: String): List<WorkoutPlanResponse>
 
@@ -41,6 +39,20 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     )
+
+    //community
+    @GET("api/community")
+    suspend fun getCommunityPlans(
+        @Header("Authorization") token: String,
+        @Query("search") search: String = "",
+        @Query("filterType") filterType: String = "name"
+    ): List<CommunityPlanResponse>
+
+    @POST("api/community/{id}/copy")
+    suspend fun copyPlan(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): WorkoutPlanResponse
 
    // Calendar
 
