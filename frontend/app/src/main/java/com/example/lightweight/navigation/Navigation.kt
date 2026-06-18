@@ -1,12 +1,19 @@
 package com.example.lightweight.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.lightweight.data.local.TokenStore
 import com.example.lightweight.ui.screens.auth.LoginScreen
 import com.example.lightweight.ui.screens.auth.RegisterScreen
 import com.example.lightweight.ui.screens.home.HomeScreen
@@ -23,6 +30,7 @@ import com.example.lightweight.ui.viewmodel.AuthViewModel
 import com.example.lightweight.ui.viewmodel.CalendarViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun Navigation(navController: NavHostController) {
@@ -31,9 +39,35 @@ fun Navigation(navController: NavHostController) {
     // CalendarViewModel is shared between CalendarScreen and ExerciseLibraryScreen
     val calendarViewModel: CalendarViewModel = viewModel()
 
+    val context = LocalContext.current
+    val tokenStore = remember { TokenStore(context) }
+
+    var startDestination by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        val savedToken = tokenStore.getToken().first()
+
+        startDestination = if (savedToken.isNullOrBlank()) {
+            Screen.Login.route
+        } else {
+            Screen.Home.route
+        }
+    }
+
+    if (startDestination == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = startDestination!!
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
