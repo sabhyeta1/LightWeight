@@ -28,45 +28,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import com.example.lightweight.ui.viewmodel.CalendarViewModel
-
-/*
-@Composable
-fun CreateWorkoutPlanScreen(
-    onSave: () -> Unit = {},
-    onCancel: () -> Unit = {},
-    onEditExercise: (String) -> Unit = {},
-    viewModel: WorkoutPlanViewModel = viewModel()
-) {
-    Scaffold(
-        topBar = { LightWeightHeader() },
-        bottomBar = { LightWeightBottomBar(currentScreen = "My Plans") },
-        containerColor = Background
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "New Plan",
-                style = MaterialTheme.typography.headlineLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
-
-            WorkoutPlanForm(
-                onSave = { name, description, exercises, isPublic ->
-                    viewModel.createPlan(name, description, isPublic)
-                    onSave()
-                },
-                onCancel = onCancel,
-                onEditExercise = onEditExercise
-            )
-        }
-    }
-}*/
 @Composable
 fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
@@ -75,13 +36,6 @@ fun CreateWorkoutPlanScreen(
     viewModel: WorkoutPlanViewModel = viewModel(),
     calendarViewModel: CalendarViewModel = viewModel()
 ) {
-    //val uiState by viewModel.uiState.collectAsState()
-
-//    LaunchedEffect(uiState.plans) {
-//        if (uiState.plans.isNotEmpty()) {
-//            onSave()
-//        }
-//    }
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -136,6 +90,7 @@ fun WorkoutPlanForm(
     val planName = draftPlanState.name
     val planDescription = draftPlanState.description
     val isPublic = draftPlanState.isPublic
+    var showPublishDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         calendarViewModel.loadExerciseLibrary()
@@ -258,50 +213,36 @@ fun WorkoutPlanForm(
                     }
                 }
             }
+        }
 
-            /*LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(filteredExercises) { exercise ->
-                    val isSelected = selectedExercises.contains(exercise)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = isSelected,
-                                onCheckedChange = {
-                                    if (it) selectedExercises.add(exercise)
-                                    else selectedExercises.remove(exercise)
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Blue,
-                                    uncheckedColor = SurfaceVariant,
-                                    checkmarkColor = Color.White
-                                )
-                            )
-                            Text(
-                                text = exercise, 
-                                color = if (isSelected) Color.White else Color.Gray,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                        IconButton(
-                            onClick = { onEditExercise(exercise) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit $exercise",
-                                tint = if (isSelected) Blue else Color.Gray,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+        if (showPublishDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showPublishDialog = false
+                    viewModel.updateDraftIsPublic(false)
+                },
+                title = { Text("Publish Plan?") },
+                text = { Text("This plan will be visible to all LightWeight users. Your name will appear as the creator.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showPublishDialog = false
+                        viewModel.updateDraftIsPublic(true)
+                    }) {
+                        Text("Confirm", color = Blue)
                     }
-                }
-            }*/
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showPublishDialog = false
+                        viewModel.updateDraftIsPublic(false)
+                    }) {
+                        Text("Cancel", color = Color.Gray)
+                    }
+                },
+                containerColor = Surface,
+                titleContentColor = Color.White,
+                textContentColor = Color.LightGray
+            )
         }
 
         Row(
@@ -312,7 +253,13 @@ fun WorkoutPlanForm(
             Text(text = "Visible to public?", color = Color.White, fontSize = 16.sp)
             Switch(
                 checked = isPublic,
-                onCheckedChange = { viewModel.updateDraftIsPublic(it) },
+                onCheckedChange = { newValue ->
+                    if (newValue) {
+                        showPublishDialog = true
+                    } else {
+                        viewModel.updateDraftIsPublic(false)
+                    }
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = Blue,
