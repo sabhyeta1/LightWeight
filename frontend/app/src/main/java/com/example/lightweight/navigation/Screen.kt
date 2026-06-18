@@ -8,6 +8,7 @@ sealed class Screen(val route: String) {
     object MyPlans : Screen("my_plans")
     object Calendar : Screen("calendar")
     object Profile : Screen("profile")
+    object ExerciseLibrary : Screen("exercise_library")
     object CreatePlan : Screen("create_plan")
     object WorkoutPlanDetail : Screen("workout_plan_detail/{planId}/{planName}") {
         fun createRoute(planId: Int, planName: String) = "workout_plan_detail/$planId/$planName"

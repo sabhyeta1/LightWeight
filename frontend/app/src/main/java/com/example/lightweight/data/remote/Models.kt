@@ -56,3 +56,71 @@ data class CreateWorkoutPlanRequest(
     val description: String,
     val is_published: Boolean = false
 )
+
+// Calendar
+
+data class CalendarSessionResponse(
+    val id: Int,
+    val user_id: Int,
+    val workout_plan_id: Int,
+    val workout_plan_name: String,
+    val recurrence_rule_id: Int?,
+    val session_date: String,   // YYYY-MM-DD
+    val session_time: String,   // HH:MM:SS
+    val color_id: Int,
+    val status: String,
+    val created_at: String
+)
+
+data class CreateSessionRequest(
+    val workout_plan_id: Int,
+    val session_date: String,   // YYYY-MM-DD
+    val session_time: String,   // HH:MM
+    val color_id: Int = 1
+)
+
+data class CreateRecurrenceRequest(
+    val workout_plan_id: Int,
+    val type: String,           // "weekdays" | "interval"
+    val weekdays: List<Int>?,   // 0=Sun … 6=Sat, null for interval
+    val interval_days: Int?,    // 1-7, null for weekdays
+    val start_date: String,     // YYYY-MM-DD
+    val end_date: String,       // YYYY-MM-DD
+    val session_time: String,   // HH:MM
+    val color_id: Int = 1
+)
+
+data class RecurrenceResponse(
+    val id: Int,
+    val user_id: Int,
+    val workout_plan_id: Int,
+    val type: String,
+    val weekdays: List<Int>?,
+    val interval_days: Int?,
+    val start_date: String,
+    val end_date: String,
+    val session_time: String,
+    val color_id: Int,
+    val is_active: Boolean,
+    val created_at: String
+)
+
+data class CreateRecurrenceApiResponse(
+    val recurrence: RecurrenceResponse,
+    val sessions: List<CalendarSessionResponse>
+)
+
+// Exercise Library
+
+data class ExerciseLibraryResponse(
+    val id: Int,
+    val name: String,
+    val description: String?,
+    val photo_url: String?,
+    val muscle_groups: List<String>
+)
+
+data class MuscleGroupResponse(
+    val id: Int,
+    val name: String
+)

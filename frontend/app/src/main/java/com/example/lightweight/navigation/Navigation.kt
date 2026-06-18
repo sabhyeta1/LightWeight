@@ -10,15 +10,17 @@ import androidx.navigation.navArgument
 import com.example.lightweight.ui.screens.auth.LoginScreen
 import com.example.lightweight.ui.screens.auth.RegisterScreen
 import com.example.lightweight.ui.screens.home.HomeScreen
+import com.example.lightweight.ui.screens.calendar.CalendarScreen
 import com.example.lightweight.ui.screens.community.CommunityScreen
+import com.example.lightweight.ui.screens.exerciselibrary.ExerciseLibraryScreen
 import com.example.lightweight.ui.screens.workoutplan.MyPlansScreen
 import com.example.lightweight.ui.screens.workoutplan.CreateWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.EditWorkoutPlanScreen
 import com.example.lightweight.ui.screens.workoutplan.ExerciseDetailScreen
 import com.example.lightweight.ui.screens.workoutplan.WorkoutPlanDetailScreen
-import com.example.lightweight.ui.screens.calendar.CalendarScreen
 import com.example.lightweight.ui.screens.profile.ProfileScreen
 import com.example.lightweight.ui.viewmodel.AuthViewModel
+import com.example.lightweight.ui.viewmodel.CalendarViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 
@@ -26,6 +28,8 @@ import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 fun Navigation(navController: NavHostController) {
     val workoutPlanViewModel: WorkoutPlanViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
+    // CalendarViewModel is shared between CalendarScreen and ExerciseLibraryScreen
+    val calendarViewModel: CalendarViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -76,7 +80,7 @@ fun Navigation(navController: NavHostController) {
                 onNavigateTo = { route -> navController.navigate(route) }
             )
         }
-        
+
         composable(
             route = Screen.WorkoutPlanDetail.route,
             arguments = listOf(
@@ -90,7 +94,7 @@ fun Navigation(navController: NavHostController) {
             LaunchedEffect(planId) {
                 workoutPlanViewModel.loadPlanDetails(planId)
             }
-            
+
             WorkoutPlanDetailScreen(
                 plan = uiState.currentPlanDetails,
                 isLoading = uiState.isLoading,
@@ -99,6 +103,7 @@ fun Navigation(navController: NavHostController) {
                 onBack = { navController.popBackStack() }
             )
         }
+
         composable(
             route = Screen.EditPlan.route,
             arguments = listOf(
@@ -130,7 +135,6 @@ fun Navigation(navController: NavHostController) {
                 }
             )
         }
-        
 
         composable(
             route = Screen.ExerciseDetail.route,
@@ -144,15 +148,26 @@ fun Navigation(navController: NavHostController) {
             )
         }
 
+        // FR-12, FR-13, FR-14, FR-15 — Calendar
         composable(Screen.Calendar.route) {
             CalendarScreen(
-                onNavigateTo = { route -> navController.navigate(route) }
+                onNavigateTo = { route -> navController.navigate(route) },
+                calendarViewModel = calendarViewModel,
+                planViewModel = workoutPlanViewModel
+            )
+        }
+
+        // FR-16 — Exercise Library
+        composable(Screen.ExerciseLibrary.route) {
+            ExerciseLibraryScreen(
+                onNavigateTo = { route -> navController.navigate(route) },
+                viewModel = calendarViewModel
             )
         }
 
         composable(Screen.Profile.route) {
             ProfileScreen(
-                onNavigateTo = { route -> navController.navigate(route)},
+                onNavigateTo = { route -> navController.navigate(route) },
                 onLogout = {
                     authViewModel.logout()
                     workoutPlanViewModel.clearPlans()
