@@ -15,7 +15,8 @@ data class RegisterRequest(
 )
 data class RegisterResponse(
     val id: Int,
-    val username: String
+    val username: String,
+    val token: String
 )
 
 data class WorkoutPlanResponse(

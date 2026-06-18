@@ -15,10 +15,10 @@ class AuthRepository {
         }
     }
 
-    suspend fun register(username: String, password: String, displayName: String): Result<Unit> {
+    suspend fun register(username: String, password: String, displayName: String): Result<String> {
         return try {
-            RetrofitClient.api.register(RegisterRequest(username, password, displayName))
-            Result.success(Unit)
+            val response = RetrofitClient.api.register(RegisterRequest(username, password, displayName))
+            Result.success(response.token)
         } catch (e: Exception) {
             Result.failure(e)
         }
