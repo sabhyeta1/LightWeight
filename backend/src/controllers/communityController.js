@@ -1,8 +1,18 @@
 const communityService = require("../services/communityService");
 
-const getCommunityPlans = async (req, res) => {
+/*const getCommunityPlans = async (req, res) => {
   try {
     const plans = await communityService.getCommunityPlans();
+    res.status(200).json(plans);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};*/
+
+const getCommunityPlans = async (req, res) => {
+  try {
+    const { search = "", filterType = "name" } = req.query;
+    const plans = await communityService.getCommunityPlans(search, filterType);
     res.status(200).json(plans);
   } catch (err) {
     res.status(500).json({ error: err.message });

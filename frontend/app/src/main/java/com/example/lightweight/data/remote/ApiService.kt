@@ -40,15 +40,34 @@ interface ApiService {
         @Path("id") id: Int
     )
 
+    // FR-07: Exercise zu Plan hinzufügen
+    @POST("api/workout-plan/{id}/exercise")
+    suspend fun addExerciseToPlan(
+        @Header("Authorization") token: String,
+        @Path("id") planId: Int,
+        @Body body: AddExerciseToPlanRequest
+    ): AddExerciseToPlanResponse
+
+    // FR-08: Sets für eine Exercise-in-Plan-Zuordnung setzen (ersetzt alle bestehenden Sets)
+    @PUT("api/workout-plan/{id}/exercise/{ewpId}/sets")
+    suspend fun updateExerciseSets(
+        @Header("Authorization") token: String,
+        @Path("id") planId: Int,
+        @Path("ewpId") ewpId: Int,
+        @Body body: UpdateExerciseSetsRequest
+    ): List<ExerciseSetResponse>
+
     //community
-    @GET("api/community")
+    //@GET("api/community")
+    @GET("api/community/workout-plans")
     suspend fun getCommunityPlans(
         @Header("Authorization") token: String,
         @Query("search") search: String = "",
         @Query("filterType") filterType: String = "name"
     ): List<CommunityPlanResponse>
 
-    @POST("api/community/{id}/copy")
+    //@POST("api/community/{id}/copy")
+    @POST("api/community/workout-plans/{id}/copy")
     suspend fun copyPlan(
         @Header("Authorization") token: String,
         @Path("id") id: Int

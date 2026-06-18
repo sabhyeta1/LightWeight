@@ -128,6 +128,7 @@ fun Navigation(navController: NavHostController) {
         composable(Screen.CreatePlan.route) {
             CreateWorkoutPlanScreen(
                 viewModel = workoutPlanViewModel,
+                calendarViewModel = calendarViewModel,
                 onSave = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() },
                 onEditExercise = { exerciseName ->
@@ -140,12 +141,22 @@ fun Navigation(navController: NavHostController) {
             route = Screen.ExerciseDetail.route,
             arguments = listOf(navArgument("exerciseName") { type = NavType.StringType })
         ) { backStackEntry ->
+            val exerciseName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("exerciseName") ?: "", "UTF-8")
+            //val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
+            ExerciseDetailScreen(
+                exerciseName = exerciseName,
+                onSave = { navController.popBackStack() },
+                onCancel = { navController.popBackStack() },
+                viewModel = workoutPlanViewModel,
+                calendarViewModel = calendarViewModel
+            )
+            /*backStackEntry ->
             val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
             ExerciseDetailScreen(
                 exerciseName = exerciseName,
                 onSave = { navController.popBackStack() },
                 onCancel = { navController.popBackStack() }
-            )
+            )*/
         }
 
         // FR-12, FR-13, FR-14, FR-15 — Calendar

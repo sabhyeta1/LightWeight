@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import com.example.lightweight.ui.viewmodel.CalendarViewModel
 
 /*
 @Composable
@@ -71,7 +72,8 @@ fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
     onCancel: () -> Unit = {},
     onEditExercise: (String) -> Unit = {},
-    viewModel: WorkoutPlanViewModel = viewModel()
+    viewModel: WorkoutPlanViewModel = viewModel(),
+    calendarViewModel: CalendarViewModel = viewModel()
 ) {
     //val uiState by viewModel.uiState.collectAsState()
 
@@ -106,7 +108,9 @@ fun CreateWorkoutPlanScreen(
                     onSave()
                 },
                 onCancel = onCancel,
-                onEditExercise = onEditExercise
+                onEditExercise = onEditExercise,
+                viewModel = viewModel,
+                calendarViewModel = calendarViewModel
             )
         }
     }
@@ -121,23 +125,25 @@ fun WorkoutPlanForm(
     onSave: (String, String, List<String>, Boolean) -> Unit = { _, _, _, _ -> },
     onCancel: () -> Unit = {},
     onEditExercise: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: WorkoutPlanViewModel = viewModel(),
+    calendarViewModel: CalendarViewModel = viewModel()
 ) {
-    var planName by remember { mutableStateOf(initialName) }
-    var planDescription by remember { mutableStateOf(initialDescription) }
     var searchQuery by remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(initialIsPublic) }
 
-    val allExercises = remember {
-        listOf(
-            "Bench Press", "Squat", "Deadlift", "Pull Up",
-            "Overhead Press", "Barbell Row", "Leg Press", "Bicep Curl",
-            "Tricep Extension", "Lateral Raise", "Lunges", "Plank"
-        )
+    val draftPlanState by viewModel.draftPlan.collectAsState()
+    val libraryState by calendarViewModel.libraryState.collectAsState()
+    val planName = draftPlanState.name
+    val planDescription = draftPlanState.description
+    val isPublic = draftPlanState.isPublic
+
+    LaunchedEffect(Unit) {
+        calendarViewModel.loadExerciseLibrary()
+        viewModel.initDraftIfNeeded(initialName, initialDescription, initialIsPublic)
     }
-    val selectedExercises = remember { mutableStateListOf<String>().apply { addAll(initialSelectedExercises) } }
-    val filteredExercises = remember(searchQuery) {
-        allExercises.filter { it.contains(searchQuery, ignoreCase = true) }
+
+    val filteredExercises = remember(searchQuery, libraryState.exercises) {
+        libraryState.exercises.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
     Column(
@@ -146,7 +152,7 @@ fun WorkoutPlanForm(
     ) {
         OutlinedTextField(
             value = planName,
-            onValueChange = { planName = it },
+            onValueChange = { viewModel.updateDraftName(it) },
             label = { Text("Name") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -162,7 +168,7 @@ fun WorkoutPlanForm(
 
         OutlinedTextField(
             value = planDescription,
-            onValueChange = { planDescription = it },
+            onValueChange = { viewModel.updateDraftDescription(it) },
             label = { Text("Description") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
@@ -212,6 +218,49 @@ fun WorkoutPlanForm(
 
             LazyColumn(modifier = Modifier.fillMaxWidth()) {
                 items(filteredExercises) { exercise ->
+                    val isSelected = draftPlanState.selectedExercises.any { it.exerciseId == exercise.id }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = {
+                                    viewModel.toggleExerciseSelection(exercise.id, exercise.name)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Blue,
+                                    uncheckedColor = SurfaceVariant,
+                                    checkmarkColor = Color.White
+                                )
+                            )
+                            Text(
+                                text = exercise.name,
+                                color = if (isSelected) Color.White else Color.Gray,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                        IconButton(
+                            onClick = { onEditExercise(exercise.name) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit ${exercise.name}",
+                                tint = if (isSelected) Blue else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            /*LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(filteredExercises) { exercise ->
                     val isSelected = selectedExercises.contains(exercise)
                     Row(
                         modifier = Modifier
@@ -252,7 +301,7 @@ fun WorkoutPlanForm(
                         }
                     }
                 }
-            }
+            }*/
         }
 
         Row(
@@ -263,7 +312,7 @@ fun WorkoutPlanForm(
             Text(text = "Visible to public?", color = Color.White, fontSize = 16.sp)
             Switch(
                 checked = isPublic,
-                onCheckedChange = { isPublic = it },
+                onCheckedChange = { viewModel.updateDraftIsPublic(it) },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
                     checkedTrackColor = Blue,
@@ -288,7 +337,7 @@ fun WorkoutPlanForm(
                 Text("Cancel", color = Color.White)
             }
             Button(
-                onClick = { onSave(planName, planDescription, selectedExercises.toList(), isPublic) },
+                onClick = { onSave(planName, planDescription, draftPlanState.selectedExercises.map { it.name }, isPublic) },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(8.dp)

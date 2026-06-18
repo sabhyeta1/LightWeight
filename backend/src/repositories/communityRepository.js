@@ -1,7 +1,65 @@
 const db = require("../database");
 const WorkoutPlan = require("../models/WorkoutPlan");
 
-async function findPublishedPlans() {
+async function findPublishedPlans(search = "", filterType = "name") {
+  const params = [];
+  let filterClause = "";
+
+  if (search && search.trim() !== "") {
+    params.push(`%${search.trim()}%`);
+
+    if (filterType === "muscle group") {
+      // nur Plans, die mind. eine Exercise mit passender Muscle Group haben
+      filterClause = `
+        AND EXISTS (
+          SELECT 1
+          FROM exercises_workout_plan ewp2
+          JOIN exercises_muscle_groups emg2
+            ON emg2.exercise_id = ewp2.exercise_id
+          JOIN muscle_groups mg2
+            ON mg2.id = emg2.muscle_group_id
+          WHERE ewp2.workout_plan_id = wp.id
+            AND mg2.name ILIKE $1
+        )
+      `;
+    } else {
+      // default: nach name suchen
+      filterClause = "AND wp.name ILIKE $1";
+    }
+  }
+
+  const sql = `
+    SELECT
+      wp.id,
+      wp.owner_id,
+      wp.name,
+      wp.description,
+      wp.is_published,
+      u.display_name AS owner_name,
+      COALESCE(
+        ARRAY_AGG(DISTINCT mg.name) FILTER (WHERE mg.name IS NOT NULL),
+        '{}'
+      ) AS muscle_groups
+    FROM workout_plan wp
+    JOIN users u
+      ON u.id = wp.owner_id
+    LEFT JOIN exercises_workout_plan ewp
+      ON ewp.workout_plan_id = wp.id
+    LEFT JOIN exercises_muscle_groups emg
+      ON emg.exercise_id = ewp.exercise_id
+    LEFT JOIN muscle_groups mg
+      ON mg.id = emg.muscle_group_id
+    WHERE wp.is_published = true
+    ${filterClause}
+    GROUP BY wp.id, wp.owner_id, wp.name, wp.description, wp.is_published, u.display_name
+    ORDER BY wp.id DESC
+  `;
+
+  const { rows } = await db.query(sql, params);
+  return rows;
+}
+
+/*async function findPublishedPlans() {
   const sql = `
     SELECT
       wp.id,
@@ -27,7 +85,7 @@ async function findPublishedPlans() {
 
   const { rows } = await db.query(sql);
   return rows;
-}
+}*/
 
 async function findPublishedPlanById(planId) {
   const planSql = `

@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lightweight.data.local.TokenStore
 import com.example.lightweight.data.remote.CreateWorkoutPlanRequest
+import com.example.lightweight.data.remote.ExerciseSetInput
 import com.example.lightweight.data.remote.RetrofitClient
 import com.example.lightweight.data.remote.WorkoutPlanResponse
 import com.example.lightweight.data.remote.WorkoutPlanDetailResponse
@@ -21,6 +22,20 @@ data class WorkoutPlanUiState(
     val errorMessage: String? = null
 )
 
+data class DraftExercise(
+    val exerciseId: Int,
+    val name: String,
+    val sets: List<ExerciseSetInput> = emptyList()
+)
+
+data class DraftPlanState(
+    val name: String = "",
+    val description: String = "",
+    val isPublic: Boolean = false,
+    val initialized: Boolean = false,
+    val selectedExercises: List<DraftExercise> = emptyList()
+)
+
 class WorkoutPlanViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = WorkoutPlanRepository()
@@ -29,11 +44,37 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
     private val _uiState = MutableStateFlow(WorkoutPlanUiState())
     val uiState: StateFlow<WorkoutPlanUiState> = _uiState
 
+    private val _draftPlan = MutableStateFlow(DraftPlanState())
+    val draftPlan: StateFlow<DraftPlanState> = _draftPlan
+
     init {
         loadPlans()
     }
 
     fun createPlan(name: String, description: String, isPublic: Boolean) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+
+            val planResult = repository.createWorkoutPlan(token, name, description, isPublic)
+            val plan = planResult.getOrElse { error ->
+                _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                return@launch
+            }
+
+            _draftPlan.value.selectedExercises.forEachIndexed { index, draftExercise ->
+                val addResult = repository.addExerciseToPlan(token, plan.id, draftExercise.exerciseId, index + 1)
+                val addedExercise = addResult.getOrNull()
+                if (addedExercise != null && draftExercise.sets.isNotEmpty()) {
+                    repository.updateExerciseSets(token, plan.id, addedExercise.id, draftExercise.sets)
+                }
+            }
+
+            clearDraftPlan()
+            loadPlans()
+        }
+    }
+
+    /*fun createPlan(name: String, description: String, isPublic: Boolean) {
         viewModelScope.launch {
             val token = tokenStore.getToken().first() ?: return@launch
             repository.createWorkoutPlan(token, name, description, isPublic)
@@ -42,6 +83,60 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.value = _uiState.value.copy(errorMessage = error.message)
                 }
         }
+    }*/
+
+    fun initDraftIfNeeded(name: String, description: String, isPublic: Boolean) {
+        if (!_draftPlan.value.initialized) {
+            _draftPlan.value = _draftPlan.value.copy(
+                name = name,
+                description = description,
+                isPublic = isPublic,
+                initialized = true
+            )
+        }
+    }
+
+    fun updateDraftName(name: String) {
+        _draftPlan.value = _draftPlan.value.copy(name = name)
+    }
+
+    fun updateDraftDescription(description: String) {
+        _draftPlan.value = _draftPlan.value.copy(description = description)
+    }
+
+    fun updateDraftIsPublic(isPublic: Boolean) {
+        _draftPlan.value = _draftPlan.value.copy(isPublic = isPublic)
+    }
+    fun toggleExerciseSelection(exerciseId: Int, name: String) {
+        val current = _draftPlan.value.selectedExercises
+        val alreadySelected = current.any { it.exerciseId == exerciseId }
+        _draftPlan.value = _draftPlan.value.copy(
+            selectedExercises = if (alreadySelected) {
+                current.filter { it.exerciseId != exerciseId }
+            } else {
+                current + DraftExercise(exerciseId = exerciseId, name = name)
+            }
+        )
+    }
+
+    fun isExerciseSelected(exerciseId: Int): Boolean {
+        return _draftPlan.value.selectedExercises.any { it.exerciseId == exerciseId }
+    }
+
+    fun updateSetsForExercise(exerciseId: Int, sets: List<ExerciseSetInput>) {
+        _draftPlan.value = _draftPlan.value.copy(
+            selectedExercises = _draftPlan.value.selectedExercises.map {
+                if (it.exerciseId == exerciseId) it.copy(sets = sets) else it
+            }
+        )
+    }
+
+    fun getSetsForExercise(exerciseId: Int): List<ExerciseSetInput> {
+        return _draftPlan.value.selectedExercises.firstOrNull { it.exerciseId == exerciseId }?.sets ?: emptyList()
+    }
+
+    fun clearDraftPlan() {
+        _draftPlan.value = DraftPlanState()
     }
 
     fun loadPlans() {

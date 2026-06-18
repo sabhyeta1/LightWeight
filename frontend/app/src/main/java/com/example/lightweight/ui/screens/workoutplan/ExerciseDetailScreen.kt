@@ -18,17 +18,43 @@ import com.example.lightweight.ui.theme.Background
 import com.example.lightweight.ui.theme.Blue
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.theme.SurfaceVariant
+import com.example.lightweight.ui.viewmodel.CalendarViewModel
+import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.lightweight.data.remote.ExerciseSetInput
 
 @Composable
 fun ExerciseDetailScreen(
     exerciseName: String = "Bench Press",
     onSave: () -> Unit = {},
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {},
+    viewModel: WorkoutPlanViewModel = viewModel(),
+    calendarViewModel: CalendarViewModel = viewModel()
 ) {
     var sets by remember { mutableStateOf("") }
     var reps by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
-    var machineSettings by remember { mutableStateOf("") }
+    var machineSettings by remember { mutableStateOf("")}
+
+    // Exercise-Library wurde schon von CreateWorkoutPlanScreen geladen, hier nur die id zum Namen suchen
+    val libraryState by calendarViewModel.libraryState.collectAsState()
+    val exerciseId = remember(exerciseName, libraryState.exercises) {
+        libraryState.exercises.firstOrNull { it.name == exerciseName }?.id
+    }
+
+    // Falls für diese Exercise schon mal Sets eingegeben wurden, Felder damit vorbefüllen
+    LaunchedEffect(exerciseId) {
+        if (exerciseId != null) {
+            val existingSets = viewModel.getSetsForExercise(exerciseId)
+            if (existingSets.isNotEmpty()) {
+                sets = existingSets.size.toString()
+                reps = existingSets.first().reps?.toString() ?: ""
+                weight = existingSets.first().weight?.toString() ?: ""
+                machineSettings = existingSets.first().machine_settings ?: ""
+            }
+        }
+    }
+
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -120,13 +146,35 @@ fun ExerciseDetailScreen(
                     Text("Cancel", color = Color.White)
                 }
                 Button(
-                    onClick = onSave,
+                    onClick = {
+                        if (exerciseId != null) {
+                            val setsCount = sets.toIntOrNull() ?: 1
+                            val newSets = (1..setsCount).map { setNumber ->
+                                ExerciseSetInput(
+                                    set_number = setNumber,
+                                    reps = reps.toIntOrNull(),
+                                    weight = weight.toDoubleOrNull(),
+                                    machine_settings = machineSettings.ifBlank { null }
+                                )
+                            }
+                            viewModel.updateSetsForExercise(exerciseId, newSets)
+                        }
+                        onSave()
+                    },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Blue),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text("Save", color = Color.White)
                 }
+                /*Button(
+                    onClick = onSave,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Save", color = Color.White)
+                }*/
             }
         }
     }
