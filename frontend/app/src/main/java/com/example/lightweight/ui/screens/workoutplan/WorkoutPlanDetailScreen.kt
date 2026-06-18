@@ -160,28 +160,26 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
             
             Spacer(modifier = Modifier.height(4.dp))
 
-            exercise.sets.forEach { set ->
+            if (exercise.sets.isNotEmpty()) {
+                val firstSet = exercise.sets.first()
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     val details = mutableListOf<String>()
-                    set.reps?.let { details.add("$it Reps") }
-                    set.weight?.let { details.add("$it kg") }
+                    details.add("Sets: ${exercise.sets.size}")
+                    firstSet.reps?.let { details.add("Reps: $it") }
+                    firstSet.weight?.let { details.add("Weight: $it kg") }
 
-                    if (details.isNotEmpty()) {
-                        Text(
-                            text = details.joinToString(" | "),
-                            color = Color.LightGray,
-                            fontSize = 14.sp
-                        )
-                    }
+                    Text(
+                        text = details.joinToString(" | "),
+                        color = Color.LightGray,
+                        fontSize = 14.sp
+                    )
 
-                    set.machine_settings?.let { settings ->
+                    firstSet.machine_settings?.let { settings ->
                         if (settings.isNotEmpty()) {
-                            if (details.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "[$settings]",
                                 color = Blue,
@@ -191,11 +189,9 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
                         }
                     }
                 }
-            }
-            
-            if (exercise.sets.isEmpty()) {
+            } else {
                 Text(
-                    text = "Keine Sätze definiert",
+                    text = "no sets defined",
                     color = Color.DarkGray,
                     fontSize = 14.sp
                 )

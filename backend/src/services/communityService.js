@@ -1,7 +1,11 @@
 const communityRepository = require("../repositories/communityRepository");
 
-const getCommunityPlans = async () => {
+/*const getCommunityPlans = async () => {
   return await communityRepository.findPublishedPlans();
+};*/
+
+const getCommunityPlans = async (search = "", filterType = "name") => {
+  return await communityRepository.findPublishedPlans(search, filterType);
 };
 
 const getCommunityPlanById = async (planId) => {

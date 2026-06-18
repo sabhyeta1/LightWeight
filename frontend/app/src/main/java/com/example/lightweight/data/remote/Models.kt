@@ -120,7 +120,6 @@ data class CreateRecurrenceApiResponse(
 )
 
 // Exercise Library
-
 data class ExerciseLibraryResponse(
     val id: Int,
     val name: String,
@@ -132,4 +131,31 @@ data class ExerciseLibraryResponse(
 data class MuscleGroupResponse(
     val id: Int,
     val name: String
+)
+
+
+// FR-07: Exercise zu einem Plan hinzufügen
+data class AddExerciseToPlanRequest(
+    val exercise_id: Int,
+    val order: Int
+)
+
+data class AddExerciseToPlanResponse(
+    val id: Int, // = ewp_id, wird für FR-08 (Sets setzen) gebraucht
+    val workout_plan_id: Int,
+    val exercise_id: Int,
+    val order: Int
+)
+
+// FR-08: Sets für eine Exercise-in-Plan-Zuordnung setzen
+data class ExerciseSetInput(
+    val set_number: Int,
+    val reps: Int? = null,
+    val weight: Double? = null,
+    val machine_settings: String? = null,
+    val is_drop_set: Boolean = false
+)
+
+data class UpdateExerciseSetsRequest(
+    val sets: List<ExerciseSetInput>
 )
