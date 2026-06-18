@@ -3,6 +3,7 @@ package com.example.lightweight.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ fun LightWeightBottomBar(
         val items = listOf(
             BottomNavItem("Community", Icons.Default.Search, Screen.Community.route),
             BottomNavItem("My Plans", Icons.Default.List, Screen.MyPlans.route),
+            BottomNavItem("Library", Icons.Default.Star, Screen.ExerciseLibrary.route),
             BottomNavItem("Calendar", Icons.Default.DateRange, Screen.Calendar.route),
             BottomNavItem("Profile", Icons.Default.Person, Screen.Profile.route)
         )
