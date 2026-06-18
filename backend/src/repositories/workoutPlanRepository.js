@@ -84,14 +84,79 @@ async function updatePlan(planId, userId, name, description, isPublished) {
 }
 
 async function deletePlan(planId, userId) {
-  const sql = `
-    DELETE FROM workout_plan
-    WHERE id = $1 AND owner_id = $2
-    RETURNING id
-  `;
+  const client = await db.connect();
 
-  const { rows } = await db.query(sql, [planId, userId]);
-  return rows.length > 0;
+  try {
+    await client.query("BEGIN");
+
+    const planResult = await client.query(
+      `
+      SELECT id
+      FROM workout_plan
+      WHERE id = $1 AND owner_id = $2
+      `,
+      [planId, userId]
+    );
+
+    if (planResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+
+    await client.query(
+      `
+      DELETE FROM exercise_sets
+      WHERE ewp_id IN (
+        SELECT id
+        FROM exercises_workout_plan
+        WHERE workout_plan_id = $1
+      )
+      `,
+      [planId]
+    );
+
+    await client.query(
+      `
+      DELETE FROM exercises_workout_plan
+      WHERE workout_plan_id = $1
+      `,
+      [planId]
+    );
+
+    await client.query(
+      `
+      DELETE FROM calendar_sessions
+      WHERE workout_plan_id = $1
+        AND user_id = $2
+      `,
+      [planId, userId]
+    );
+
+    await client.query(
+      `
+      DELETE FROM recurrence_rules
+      WHERE workout_plan_id = $1
+        AND user_id = $2
+      `,
+      [planId, userId]
+    );
+
+    await client.query(
+      `
+      DELETE FROM workout_plan
+      WHERE id = $1 AND owner_id = $2
+      `,
+      [planId, userId]
+    );
+
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // FR-07: add exercise to plan
