@@ -65,6 +65,7 @@ fun EditWorkoutPlanScreen(
             }
 
             WorkoutPlanForm(
+                modifier = Modifier.weight(1f),
                 initialName = plan?.name ?: planName,
                 initialDescription = plan?.description ?: "",
                 initialIsPublic = plan?.is_published ?: false,

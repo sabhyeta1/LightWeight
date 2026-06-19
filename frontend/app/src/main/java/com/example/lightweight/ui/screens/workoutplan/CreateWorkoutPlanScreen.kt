@@ -5,7 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
@@ -61,6 +63,7 @@ fun CreateWorkoutPlanScreen(
             )
 
             WorkoutPlanForm(
+                modifier = Modifier.weight(1f),
                 onSave = { name, description, exercises, isPublic ->
                     viewModel.createPlan(name, description, isPublic)
                     onSave()
@@ -105,8 +108,10 @@ fun WorkoutPlanForm(
         libraryState.exercises.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
+    val scrollState = rememberScrollState()
+
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         OutlinedTextField(
@@ -152,8 +157,8 @@ fun WorkoutPlanForm(
 
         Column(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth()
+                .height(300.dp)
                 .background(Surface, RoundedCornerShape(12.dp))
                 .border(1.dp, SurfaceVariant, RoundedCornerShape(12.dp))
                 .padding(12.dp)
@@ -176,7 +181,7 @@ fun WorkoutPlanForm(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
                 items(filteredExercises) { exercise ->
                     val isSelected = draftPlanState.selectedExercises.any { it.exerciseId == exercise.id }
                     Row(
