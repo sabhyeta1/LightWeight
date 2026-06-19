@@ -136,6 +136,18 @@ data class MuscleGroupResponse(
 )
 
 
+data class UpdateSessionRequest(
+    val session_date: String?,
+    val session_time: String?,
+    val color_id: Int?
+)
+
+data class UpdateFutureSessionsRequest(
+    val session_date: String,    // from-date (inclusive), not changed, just used as filter
+    val session_time: String,
+    val color_id: Int
+)
+
 // FR-07: Exercise zu einem Plan hinzufügen
 data class AddExerciseToPlanRequest(
     val exercise_id: Int,

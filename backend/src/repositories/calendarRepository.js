@@ -71,6 +71,75 @@ async function createSession(userId, data) {
   return rows[0];
 }
 
+async function updateSession(userId, sessionId, data) {
+  const fields = [];
+  const values = [sessionId, userId];
+  let idx = 3;
+
+  if (data.session_date !== undefined) { fields.push(`session_date = $${idx++}`); values.push(data.session_date); }
+  if (data.session_time !== undefined) { fields.push(`session_time = $${idx++}`); values.push(data.session_time); }
+  if (data.color_id    !== undefined) { fields.push(`color_id = $${idx++}`);    values.push(data.color_id); }
+
+  if (fields.length === 0) throw new Error("No fields to update");
+
+  const sql = `
+    UPDATE calendar_sessions
+    SET ${fields.join(", ")}
+    WHERE id = $1
+      AND user_id = $2
+    RETURNING
+      id, user_id, workout_plan_id, recurrence_rule_id,
+      session_date, session_time, color_id, status, created_at
+  `;
+
+  const { rows } = await db.query(sql, values);
+  if (rows.length === 0) throw new Error("Session not found");
+
+  // fetch workout plan name for the response (same shape as getSessions)
+  const named = await db.query(
+    `SELECT cs.*, wp.name AS workout_plan_name
+       FROM calendar_sessions cs
+       JOIN workout_plan wp ON wp.id = cs.workout_plan_id
+      WHERE cs.id = $1`,
+    [rows[0].id]
+  );
+  return named.rows[0];
+}
+
+async function updateFutureSessions(userId, recurrenceId, sessionDate, data) {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Update all future sessions in the series (>= the tapped session's date)
+    await client.query(
+      `UPDATE calendar_sessions
+          SET session_time = $1, color_id = $2
+        WHERE recurrence_rule_id = $3
+          AND user_id = $4
+          AND session_date >= $5`,
+      [data.session_time, data.color_id, recurrenceId, userId, sessionDate]
+    );
+
+    // Also update the rule itself so any description stays consistent
+    await client.query(
+      `UPDATE recurrence_rules
+          SET session_time = $1, color_id = $2
+        WHERE id = $3
+          AND user_id = $4`,
+      [data.session_time, data.color_id, recurrenceId, userId]
+    );
+
+    await client.query("COMMIT");
+    return true;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 async function deleteSession(userId, sessionId) {
   const sql = `
     DELETE FROM calendar_sessions
@@ -227,7 +296,7 @@ async function deleteRecurrence(userId, recurrenceId) {
       DELETE FROM calendar_sessions
       WHERE recurrence_rule_id = $1
         AND user_id = $2
-        AND session_date >= CURRENT_DATE
+        AND session_date > CURRENT_DATE
       `,
       [recurrenceId, userId]
     );
@@ -256,6 +325,8 @@ async function deleteRecurrence(userId, recurrenceId) {
 module.exports = {
   getSessions,
   createSession,
+  updateSession,
+  updateFutureSessions,
   deleteSession,
   createRecurrence,
   deleteRecurrence,

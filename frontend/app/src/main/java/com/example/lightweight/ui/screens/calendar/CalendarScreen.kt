@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -65,6 +66,7 @@ fun CalendarScreen(
 
     var showScheduleDialog by remember { mutableStateOf(false) }
     var showDeleteDialog   by remember { mutableStateOf<CalendarSessionResponse?>(null) }
+    var showEditDialog     by remember { mutableStateOf<CalendarSessionResponse?>(null) }
 
     // Auto-clear feedback messages
     LaunchedEffect(calendarState.successMessage, calendarState.errorMessage) {
@@ -76,7 +78,7 @@ fun CalendarScreen(
 
     // Group sessions by date string for the list
     val grouped: Map<String, List<CalendarSessionResponse>> = remember(calendarState.sessions) {
-    calendarState.sessions.groupBy { it.session_date.take(10) }
+        calendarState.sessions.groupBy { it.session_date.take(10) }
     }
     val sortedDates: List<String> = remember(grouped) { grouped.keys.sorted() }
 
@@ -179,6 +181,7 @@ fun CalendarScreen(
                             ) { session ->
                                 ScheduleSessionRow(
                                     session = session,
+                                    onEdit   = { showEditDialog = session },
                                     onDelete = { showDeleteDialog = session }
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -251,6 +254,29 @@ fun CalendarScreen(
             }
         )
     }
+
+    // Edit dialog
+    showEditDialog?.let { session ->
+        EditSessionDialog(
+            session = session,
+            onDismiss = { showEditDialog = null },
+            onSaveThisOnly = { date, time, colorId ->
+                calendarViewModel.updateSession(session.id, date, time, colorId)
+                showEditDialog = null
+            },
+            onSaveAllFuture = { time, colorId ->
+                session.recurrence_rule_id?.let { rid ->
+                    calendarViewModel.updateFutureSessions(
+                        rid,
+                        session.session_date.take(10),
+                        time,
+                        colorId
+                    )
+                }
+                showEditDialog = null
+            }
+        )
+    }
 }
 
 // Date header
@@ -293,6 +319,7 @@ private fun DateHeader(date: LocalDate) {
 @Composable
 private fun ScheduleSessionRow(
     session: CalendarSessionResponse,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val color       = colorForId(session.color_id)
@@ -349,6 +376,19 @@ private fun ScheduleSessionRow(
                     )
                 }
             }
+        }
+
+        // Edit icon
+        IconButton(
+            onClick = onEdit,
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Edit session",
+                tint = Subtext,
+                modifier = Modifier.size(18.dp)
+            )
         }
 
         // Delete icon
@@ -413,6 +453,158 @@ private fun DeleteSessionDialog(
                     Text("Cancel", color = Subtext)
                 }
             }
+        }
+    )
+}
+
+// Edit session dialog
+
+@Composable
+private fun EditSessionDialog(
+    session: CalendarSessionResponse,
+    onDismiss: () -> Unit,
+    onSaveThisOnly: (date: String, time: String, colorId: Int) -> Unit,
+    onSaveAllFuture: (time: String, colorId: Int) -> Unit
+) {
+    val isRecurring = session.recurrence_rule_id != null
+
+    // For recurring sessions we first ask scope, then show the edit form
+    var editAllFuture by remember { mutableStateOf<Boolean?>(if (isRecurring) null else false) }
+
+    // If we haven't picked a scope yet, show the scope picker (mirrors delete dialog)
+    if (editAllFuture == null) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            containerColor = Surface,
+            title = {
+                Text("Edit workout", color = Color.White, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(
+                    "\"${session.workout_plan_name}\" is part of a recurring series. " +
+                            "Edit just this event, or all future events?",
+                    color = Subtext,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { editAllFuture = true }) {
+                    Text("All future events", color = Blue, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { editAllFuture = false }) {
+                        Text("This event only", color = Blue)
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancel", color = Subtext)
+                    }
+                }
+            }
+        )
+        return
+    }
+
+    // Edit form — pre-filled from current session
+    var editDate        by remember { mutableStateOf(LocalDate.parse(session.session_date.take(10))) }
+    var timeHour        by remember { mutableStateOf(session.session_time.take(2).toIntOrNull() ?: 18) }
+    var timeMinute      by remember { mutableStateOf(session.session_time.drop(3).take(2).toIntOrNull() ?: 0) }
+    var selectedColorId by remember { mutableStateOf(session.color_id) }
+
+    val dateFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val scope   = if (editAllFuture == true) "all future events" else "this event"
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Surface,
+        modifier = Modifier.fillMaxWidth(),
+        title = {
+            Text(
+                "Edit \"${session.workout_plan_name}\"",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Scope reminder
+                if (isRecurring) {
+                    Text(
+                        "Editing $scope",
+                        color = Blue,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                // Date — only shown for single-event edits
+                if (editAllFuture == false) {
+                    SectionLabel("Date")
+                    DateStepper(date = editDate, onDateChange = { editDate = it })
+                }
+
+                SectionLabel("Time")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    NumberStepper(value = timeHour, min = 0, max = 23, onValueChange = { timeHour = it }) { onTap ->
+                        Text(
+                            text = timeHour.toString().padStart(2, '0'),
+                            color = Blue, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { onTap() }
+                        )
+                    }
+                    Text(":", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    NumberStepper(value = timeMinute, min = 0, max = 59, step = 5, onValueChange = { timeMinute = it }) { onTap ->
+                        Text(
+                            text = timeMinute.toString().padStart(2, '0'),
+                            color = Blue, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { onTap() }
+                        )
+                    }
+                }
+
+                SectionLabel("Color")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CALENDAR_COLORS.forEachIndexed { index, color ->
+                        val cid = index + 1
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(color)
+                                .then(
+                                    if (selectedColorId == cid) Modifier.border(2.dp, Color.White, CircleShape)
+                                    else Modifier
+                                )
+                                .clickable { selectedColorId = cid }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            val timeStr = "${timeHour.toString().padStart(2, '0')}:${timeMinute.toString().padStart(2, '0')}"
+            TextButton(onClick = {
+                if (editAllFuture == true) {
+                    onSaveAllFuture(timeStr, selectedColorId)
+                } else {
+                    onSaveThisOnly(editDate.format(dateFmt), timeStr, selectedColorId)
+                }
+            }) {
+                Text("Save", color = Blue, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel", color = Subtext) }
         }
     )
 }
@@ -543,7 +735,7 @@ private fun ScheduleWorkoutDialog(
                                         .background(if (sel) Blue else SurfaceVariant)
                                         .clickable {
                                             selectedWeekdays = if (sel) selectedWeekdays - idx
-                                                               else     selectedWeekdays + idx
+                                            else     selectedWeekdays + idx
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {

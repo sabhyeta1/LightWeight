@@ -40,6 +40,55 @@ const createSession = async (req, res) => {
 };
 
 /*
+PATCH /api/calendar/sessions/:id
+
+Body (all fields optional, at least one required):
+{
+  "session_date": "2026-06-25",
+  "session_time": "09:00",
+  "color_id": 3
+}
+*/
+const updateSession = async (req, res) => {
+  try {
+    const userId    = req.user.id;
+    const sessionId = Number(req.params.id);
+
+    const session = await calendarService.updateSession(userId, sessionId, req.body);
+    res.status(200).json(session);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/*
+PATCH /api/calendar/recurrences/:id/sessions
+
+Body:
+{
+  "session_date": "2026-06-25",   <- the date of the tapped session (from inclusive)
+  "session_time": "09:00",
+  "color_id": 3
+}
+*/
+const updateFutureSessions = async (req, res) => {
+  try {
+    const userId       = req.user.id;
+    const recurrenceId = Number(req.params.id);
+    const { session_date, session_time, color_id } = req.body;
+
+    await calendarService.updateFutureSessions(userId, recurrenceId, session_date, {
+      session_time,
+      color_id,
+    });
+
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+/*
 DELETE /api/calendar/sessions/:id
 */
 const deleteSession = async (req, res) => {
@@ -135,6 +184,8 @@ const deleteRecurrence = async (req, res) => {
 module.exports = {
   getSessions,
   createSession,
+  updateSession,
+  updateFutureSessions,
   deleteSession,
   createRecurrence,
   deleteRecurrence,

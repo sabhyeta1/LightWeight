@@ -4,6 +4,8 @@ import com.example.lightweight.data.remote.CalendarSessionResponse
 import com.example.lightweight.data.remote.CreateRecurrenceApiResponse
 import com.example.lightweight.data.remote.CreateRecurrenceRequest
 import com.example.lightweight.data.remote.CreateSessionRequest
+import com.example.lightweight.data.remote.UpdateSessionRequest
+import com.example.lightweight.data.remote.UpdateFutureSessionsRequest
 import com.example.lightweight.data.remote.ExerciseLibraryResponse
 import com.example.lightweight.data.remote.MuscleGroupResponse
 import com.example.lightweight.data.remote.RetrofitClient
@@ -23,6 +25,24 @@ class CalendarRepository {
         return try {
             val session = RetrofitClient.api.createCalendarSession("Bearer $token", request)
             Result.success(session)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateSession(token: String, sessionId: Int, request: UpdateSessionRequest): Result<CalendarSessionResponse> {
+        return try {
+            val session = RetrofitClient.api.updateCalendarSession("Bearer $token", sessionId, request)
+            Result.success(session)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateFutureSessions(token: String, recurrenceId: Int, request: UpdateFutureSessionsRequest): Result<Unit> {
+        return try {
+            RetrofitClient.api.updateFutureSessions("Bearer $token", recurrenceId, request)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

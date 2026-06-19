@@ -85,7 +85,7 @@ interface ApiService {
         @Path("id") id: Int
     ): WorkoutPlanDetailResponse
 
-   // Calendar
+    // Calendar
     @GET("api/calendar/sessions")
     suspend fun getCalendarSessions(
         @Header("Authorization") token: String,
@@ -98,6 +98,20 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body body: CreateSessionRequest
     ): CalendarSessionResponse
+
+    @PATCH("api/calendar/sessions/{id}")
+    suspend fun updateCalendarSession(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body body: UpdateSessionRequest
+    ): CalendarSessionResponse
+
+    @PATCH("api/calendar/recurrences/{id}/sessions")
+    suspend fun updateFutureSessions(
+        @Header("Authorization") token: String,
+        @Path("id") recurrenceId: Int,
+        @Body body: UpdateFutureSessionsRequest
+    )
 
     @DELETE("api/calendar/sessions/{id}")
     suspend fun deleteCalendarSession(

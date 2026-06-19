@@ -15,6 +15,14 @@ const createSession = async (userId, data) => {
   return await calendarRepository.createSession(userId, sessionData);
 };
 
+const updateSession = async (userId, sessionId, data) => {
+  return await calendarRepository.updateSession(userId, sessionId, data);
+};
+
+const updateFutureSessions = async (userId, recurrenceId, sessionDate, data) => {
+  return await calendarRepository.updateFutureSessions(userId, recurrenceId, sessionDate, data);
+};
+
 const deleteSession = async (userId, sessionId) => {
   return await calendarRepository.deleteSession(userId, sessionId);
 };
@@ -119,6 +127,8 @@ function formatDate(date) {
 module.exports = {
   getSessions,
   createSession,
+  updateSession,
+  updateFutureSessions,
   deleteSession,
   createRecurrence,
   deleteRecurrence,

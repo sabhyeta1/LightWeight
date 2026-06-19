@@ -7,6 +7,8 @@ import com.example.lightweight.data.local.TokenStore
 import com.example.lightweight.data.remote.CalendarSessionResponse
 import com.example.lightweight.data.remote.CreateRecurrenceRequest
 import com.example.lightweight.data.remote.CreateSessionRequest
+import com.example.lightweight.data.remote.UpdateSessionRequest
+import com.example.lightweight.data.remote.UpdateFutureSessionsRequest
 import com.example.lightweight.data.remote.ExerciseLibraryResponse
 import com.example.lightweight.data.remote.MuscleGroupResponse
 import com.example.lightweight.data.repository.CalendarRepository
@@ -61,7 +63,11 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     fun loadSchedule(until: LocalDate = _calendarState.value.loadedUntil) {
         viewModelScope.launch {
             _calendarState.value = _calendarState.value.copy(isLoading = true, errorMessage = null)
-            val token = tokenStore.getToken().first() ?: return@launch
+            val token = tokenStore.getToken().first()
+            if (token.isNullOrBlank()) {
+                _calendarState.value = _calendarState.value.copy(isLoading = false)
+                return@launch
+            }
 
             val from = LocalDate.now().format(dateFormatter)
             val to   = until.format(dateFormatter)
@@ -100,6 +106,44 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
             repository.createSession(token, request)
                 .onSuccess {
                     _calendarState.value = _calendarState.value.copy(successMessage = "Session scheduled")
+                    loadSchedule()
+                }
+                .onFailure { error ->
+                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                }
+        }
+    }
+
+    fun updateSession(sessionId: Int, date: String, time: String, colorId: Int) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+            val request = UpdateSessionRequest(
+                session_date = date,
+                session_time = time,
+                color_id = colorId
+            )
+            repository.updateSession(token, sessionId, request)
+                .onSuccess {
+                    _calendarState.value = _calendarState.value.copy(successMessage = "Session updated")
+                    loadSchedule()
+                }
+                .onFailure { error ->
+                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                }
+        }
+    }
+
+    fun updateFutureSessions(recurrenceId: Int, fromDate: String, time: String, colorId: Int) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+            val request = UpdateFutureSessionsRequest(
+                session_date = fromDate,
+                session_time = time,
+                color_id     = colorId
+            )
+            repository.updateFutureSessions(token, recurrenceId, request)
+                .onSuccess {
+                    _calendarState.value = _calendarState.value.copy(successMessage = "Series updated")
                     loadSchedule()
                 }
                 .onFailure { error ->

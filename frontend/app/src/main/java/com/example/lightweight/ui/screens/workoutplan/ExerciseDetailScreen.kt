@@ -34,15 +34,22 @@ fun ExerciseDetailScreen(
     var sets by remember { mutableStateOf("") }
     var reps by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
-    var machineSettings by remember { mutableStateOf("")}
+    var machineSettings by remember { mutableStateOf("") }
 
-    // Exercise-Library wurde schon von CreateWorkoutPlanScreen geladen, hier nur die id zum Namen suchen
     val libraryState by calendarViewModel.libraryState.collectAsState()
+
+    // Make sure the exercise library is loaded
+    LaunchedEffect(Unit) {
+        if (libraryState.exercises.isEmpty()) {
+            calendarViewModel.loadExerciseLibrary()
+        }
+    }
+
     val exerciseId = remember(exerciseName, libraryState.exercises) {
         libraryState.exercises.firstOrNull { it.name == exerciseName }?.id
     }
 
-    // Falls für diese Exercise schon mal Sets eingegeben wurden, Felder damit vorbefüllen
+    // Pre-fill fields if sets were already configured for this exercise
     LaunchedEffect(exerciseId) {
         if (exerciseId != null) {
             val existingSets = viewModel.getSetsForExercise(exerciseId)
@@ -54,7 +61,6 @@ fun ExerciseDetailScreen(
             }
         }
     }
-
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -158,8 +164,8 @@ fun ExerciseDetailScreen(
                                 )
                             }
                             viewModel.updateSetsForExercise(exerciseId, newSets)
+                            onSave()
                         }
-                        onSave()
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = Blue),
@@ -167,14 +173,6 @@ fun ExerciseDetailScreen(
                 ) {
                     Text("Save", color = Color.White)
                 }
-                /*Button(
-                    onClick = onSave,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Blue),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Save", color = Color.White)
-                }*/
             }
         }
     }
