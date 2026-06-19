@@ -35,6 +35,8 @@ import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneOffset
 
 // Color palette (color_id 1–8)
@@ -50,8 +52,23 @@ val CALENDAR_COLORS = listOf(
     Color(0xFF2bcbba), // 8 Teal
 )
 
+enum class ScheduleTab {
+    Upcoming,
+    Completed
+}
+
 fun colorForId(colorId: Int): Color =
     CALENDAR_COLORS.getOrElse(colorId - 1) { CALENDAR_COLORS[0] }
+
+fun parseSessionDateTime(session: CalendarSessionResponse): LocalDateTime {
+    val dateString = session.session_date.substringBefore("T")
+    val timeString = session.session_time.take(5)
+
+    val date = LocalDate.parse(dateString)
+    val time = LocalTime.parse(timeString)
+
+    return LocalDateTime.of(date, time)
+}
 
 // Screen
 
@@ -67,6 +84,7 @@ fun CalendarScreen(
     var showScheduleDialog by remember { mutableStateOf(false) }
     var showDeleteDialog   by remember { mutableStateOf<CalendarSessionResponse?>(null) }
     var showEditDialog     by remember { mutableStateOf<CalendarSessionResponse?>(null) }
+    var selectedTab        by remember { mutableStateOf(ScheduleTab.Upcoming) }
 
     // Auto-clear feedback messages
     LaunchedEffect(calendarState.successMessage, calendarState.errorMessage) {
@@ -76,11 +94,36 @@ fun CalendarScreen(
         }
     }
 
-    // Group sessions by date string for the list
-    val grouped: Map<String, List<CalendarSessionResponse>> = remember(calendarState.sessions) {
-        calendarState.sessions.groupBy { it.session_date.take(10) }
+    val now = LocalDateTime.now()
+
+    val upcomingSessions = remember(calendarState.sessions, now) {
+        calendarState.sessions
+            .filter { parseSessionDateTime(it) >= now }
+            .sortedBy { parseSessionDateTime(it) }
     }
-    val sortedDates: List<String> = remember(grouped) { grouped.keys.sorted() }
+
+    val completedSessions = remember(calendarState.sessions, now) {
+        calendarState.sessions
+            .filter { parseSessionDateTime(it) < now }
+            .sortedByDescending { parseSessionDateTime(it) }
+    }
+
+    val displayedSessions = when (selectedTab) {
+        ScheduleTab.Upcoming -> upcomingSessions
+        ScheduleTab.Completed -> completedSessions
+    }
+
+    val grouped: Map<String, List<CalendarSessionResponse>> = remember(displayedSessions) {
+        displayedSessions.groupBy { it.session_date.take(10) }
+    }
+
+    val sortedDates: List<String> = remember(grouped, selectedTab) {
+        if (selectedTab == ScheduleTab.Upcoming) {
+            grouped.keys.sorted()
+        } else {
+            grouped.keys.sortedDescending()
+        }
+    }
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -131,6 +174,33 @@ fun CalendarScreen(
                 }
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                TextButton(
+                    onClick = { selectedTab = ScheduleTab.Upcoming }
+                ) {
+                    Text(
+                        text = "Upcoming",
+                        color = if (selectedTab == ScheduleTab.Upcoming) Blue else Subtext,
+                        fontWeight = if (selectedTab == ScheduleTab.Upcoming) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+
+                TextButton(
+                    onClick = { selectedTab = ScheduleTab.Completed }
+                ) {
+                    Text(
+                        text = "Completed",
+                        color = if (selectedTab == ScheduleTab.Completed) Blue else Subtext,
+                        fontWeight = if (selectedTab == ScheduleTab.Completed) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+
             // Schedule list
             when {
                 calendarState.isLoading && calendarState.sessions.isEmpty() -> {
@@ -145,7 +215,15 @@ fun CalendarScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("No upcoming workouts", color = Subtext, fontSize = 16.sp)
+                            Text(
+                                text = if (selectedTab == ScheduleTab.Upcoming) {
+                                    "No upcoming workouts"
+                                } else {
+                                    "No completed workouts"
+                                },
+                                color = Subtext,
+                                fontSize = 16.sp
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "Tap + to schedule your first session",
@@ -181,6 +259,7 @@ fun CalendarScreen(
                             ) { session ->
                                 ScheduleSessionRow(
                                     session = session,
+                                    showActions = selectedTab == ScheduleTab.Upcoming,
                                     onEdit   = { showEditDialog = session },
                                     onDelete = { showDeleteDialog = session }
                                 )
@@ -319,6 +398,7 @@ private fun DateHeader(date: LocalDate) {
 @Composable
 private fun ScheduleSessionRow(
     session: CalendarSessionResponse,
+    showActions: Boolean,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -378,30 +458,32 @@ private fun ScheduleSessionRow(
             }
         }
 
-        // Edit icon
-        IconButton(
-            onClick = onEdit,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Edit,
-                contentDescription = "Edit session",
-                tint = Subtext,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        if (showActions) {
+            // Edit icon
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit session",
+                    tint = Subtext,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
 
-        // Delete icon
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.size(36.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete session",
-                tint = Subtext,
-                modifier = Modifier.size(18.dp)
-            )
+            // Delete icon
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete session",
+                    tint = Subtext,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }

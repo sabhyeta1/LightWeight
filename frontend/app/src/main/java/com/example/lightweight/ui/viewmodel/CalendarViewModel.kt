@@ -69,7 +69,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
-            val from = LocalDate.now().format(dateFormatter)
+            val from = LocalDate.now().minusMonths(3).format(dateFormatter)
             val to   = until.format(dateFormatter)
 
             repository.getSessions(token, from, to)
