@@ -85,6 +85,24 @@ interface ApiService {
         @Path("id") id: Int
     ): WorkoutPlanDetailResponse
 
+    // FR-18
+    @GET("api/community/saved")
+    suspend fun getSavedPlans(
+        @Header("Authorization") token: String
+    ): List<CommunityPlanResponse>
+
+    @POST("api/community/workout-plans/{id}/save")
+    suspend fun savePlan(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
+    @DELETE("api/community/workout-plans/{id}/save")
+    suspend fun unsavePlan(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
     // Calendar
     @GET("api/calendar/sessions")
     suspend fun getCalendarSessions(

@@ -25,6 +25,8 @@ import com.example.lightweight.ui.components.LightWeightBottomBar
 import com.example.lightweight.ui.components.LightWeightHeader
 import com.example.lightweight.ui.theme.*
 import com.example.lightweight.ui.viewmodel.CommunityViewModel
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -172,7 +174,9 @@ fun CommunityScreen(
                             CommunityPlanItem(
                                 plan = plan,
                                 onAddToMyPlans = { planToCopy = plan },
-                                onViewPlan = { onViewPlan(plan.id) }
+                                onViewPlan = { onViewPlan(plan.id) },
+                                isSaved = plan.id in uiState.savedPlanIds,
+                                onToggleSave = { viewModel.toggleSavePlan(plan.id) }
                             )
                         }
                     }
@@ -245,31 +249,57 @@ fun CommunityScreen(
 fun CommunityPlanItem(
     plan: CommunityPlanResponse,
     onAddToMyPlans: () -> Unit,
-    onViewPlan: () -> Unit
+    onViewPlan: () -> Unit,
+    isSaved: Boolean,
+    onToggleSave: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Surface, RoundedCornerShape(12.dp))
             .clickable { onViewPlan() }
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(text = plan.name, color = OnBackground, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        Text(text = "by ${plan.owner_name}", color = Subtext, fontSize = 13.sp)
-        if (!plan.description.isNullOrBlank()) {
-            Text(text = plan.description, color = Subtext, fontSize = 14.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = plan.name,
+                color = OnBackground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(end = 36.dp) // Platz fürs Herz-Icon
+            )
+            Text(text = "by ${plan.owner_name}", color = Subtext, fontSize = 13.sp)
+            if (!plan.description.isNullOrBlank()) {
+                Text(text = plan.description, color = Subtext, fontSize = 14.sp)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onAddToMyPlans,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Add to My Plans", color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = onAddToMyPlans,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Blue),
-            shape = RoundedCornerShape(8.dp)
+        IconButton(
+            onClick = onToggleSave,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
         ) {
-            Text("Add to My Plans", color = Color.White, fontWeight = FontWeight.SemiBold)
+            Icon(
+                imageVector = if (isSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDescription = if (isSaved) "Unsave plan" else "Save plan",
+                tint = if (isSaved) Color.Red else Subtext
+            )
         }
     }
 }
