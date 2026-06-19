@@ -162,9 +162,8 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
 
             if (exercise.sets.isNotEmpty()) {
                 val firstSet = exercise.sets.first()
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     val details = mutableListOf<String>()
                     details.add("Sets: ${exercise.sets.size}")
@@ -179,12 +178,12 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
 
                     firstSet.machine_settings?.let { settings ->
                         if (settings.isNotEmpty()) {
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "[$settings]",
                                 color = Blue,
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(top = 2.dp)
                             )
                         }
                     }

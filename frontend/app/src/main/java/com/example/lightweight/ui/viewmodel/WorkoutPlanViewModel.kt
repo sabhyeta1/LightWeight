@@ -144,6 +144,7 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
 
     //hinzugefügt
     fun loadPlanIntoDraft(planId: Int) {
+        if (_draftPlan.value.initialized) return  // schon geladen — nicht erneut überschreiben
         viewModelScope.launch {
             val token = tokenStore.getToken().first() ?: return@launch
             repository.getWorkoutPlanDetails(token, planId)
