@@ -94,4 +94,12 @@ class WorkoutPlanRepository {
             Result.failure(e)
         }
     }
+    suspend fun removeExerciseFromPlan(token: String, planId: Int, ewpId: Int): Result<Unit> {
+        return try {
+            RetrofitClient.api.removeExerciseFromPlan("Bearer $token", planId, ewpId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

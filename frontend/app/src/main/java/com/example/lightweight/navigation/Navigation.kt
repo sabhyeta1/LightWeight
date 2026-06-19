@@ -29,6 +29,7 @@ import com.example.lightweight.ui.screens.profile.ProfileScreen
 import com.example.lightweight.ui.viewmodel.AuthViewModel
 import com.example.lightweight.ui.viewmodel.CalendarViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import com.example.lightweight.ui.viewmodel.CommunityViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 import kotlinx.coroutines.flow.first
 
@@ -101,7 +102,31 @@ fun Navigation(navController: NavHostController) {
 
         composable(Screen.Community.route) {
             CommunityScreen(
-                onNavigateTo = { route -> navController.navigate(route) }
+                onNavigateTo = { route -> navController.navigate(route) },
+                onViewPlan = { planId ->
+                    navController.navigate(Screen.CommunityPlanDetail.createRoute(planId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.CommunityPlanDetail.route,
+            arguments = listOf(navArgument("planId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val planId = backStackEntry.arguments?.getInt("planId") ?: 0
+            val communityViewModel: CommunityViewModel = viewModel()
+            val uiState by communityViewModel.uiState.collectAsState()
+
+            LaunchedEffect(planId) {
+                communityViewModel.loadPlanDetails(planId)
+            }
+
+            WorkoutPlanDetailScreen(
+                plan = uiState.selectedPlanDetails,
+                isLoading = uiState.isLoadingDetails,
+                errorMessage = uiState.errorMessage,
+                onNavigateTo = { route -> navController.navigate(route) },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -154,6 +179,7 @@ fun Navigation(navController: NavHostController) {
             val planName = backStackEntry.arguments?.getString("planName") ?: ""
             EditWorkoutPlanScreen(
                 viewModel = workoutPlanViewModel,
+                calendarViewModel = calendarViewModel,
                 planId = planId,
                 planName = planName,
                 onCancel = { navController.popBackStack() },

@@ -90,14 +90,16 @@ async function findPublishedPlans(search = "", filterType = "name") {
 async function findPublishedPlanById(planId) {
   const planSql = `
     SELECT 
-      id,
-      owner_id,
-      name,
-      description,
-      is_published
-    FROM workout_plan
-    WHERE id = $1
-      AND is_published = true
+      wp.id,
+      wp.owner_id,
+      wp.name,
+      wp.description,
+      wp.is_published,
+      u.display_name AS owner_name
+    FROM workout_plan wp
+    JOIN users u ON u.id = wp.owner_id
+    WHERE wp.id = $1
+      AND wp.is_published = true
   `;
 
   const planResult = await db.query(planSql, [planId]);
@@ -110,7 +112,7 @@ async function findPublishedPlanById(planId) {
 
   const exercisesSql = `
     SELECT
-      ewp.id AS plan_exercise_id,
+      ewp.id AS ewp_id,
       ewp.exercise_id,
       ewp."order",
       e.name,
@@ -148,8 +150,8 @@ async function findPublishedPlanById(planId) {
     };
   }
 
-  const planExerciseIds = exercises.map((exercise) => exercise.plan_exercise_id);
-
+  const planExerciseIds = exercises.map((exercise) => exercise.ewp_id);
+  
   const setsSql = `
     SELECT
       id,
@@ -169,7 +171,7 @@ async function findPublishedPlanById(planId) {
   const setsByExercise = new Map();
 
   for (const exercise of exercises) {
-    setsByExercise.set(exercise.plan_exercise_id, []);
+    setsByExercise.set(exercise.ewp_id, []);
   }
 
   for (const set of setsResult.rows) {
@@ -180,7 +182,7 @@ async function findPublishedPlanById(planId) {
     ...plan,
     exercises: exercises.map((exercise) => ({
       ...exercise,
-      sets: setsByExercise.get(exercise.plan_exercise_id) || []
+      sets: setsByExercise.get(exercise.ewp_id) || []
     }))
   };
 }

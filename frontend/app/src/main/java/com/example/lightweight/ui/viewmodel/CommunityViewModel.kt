@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lightweight.data.local.TokenStore
 import com.example.lightweight.data.remote.CommunityPlanResponse
+import com.example.lightweight.data.remote.WorkoutPlanDetailResponse
 import com.example.lightweight.data.repository.CommunityRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -17,7 +18,9 @@ data class CommunityUiState(
     val isLoading: Boolean = false,
     val plans: List<CommunityPlanResponse> = emptyList(),
     val errorMessage: String? = null,
-    val copySuccessMessage: String? = null
+    val copySuccessMessage: String? = null,
+    val isLoadingDetails: Boolean = false,
+    val selectedPlanDetails: WorkoutPlanDetailResponse? = null
 )
 
 class CommunityViewModel(application: Application) : AndroidViewModel(application) {
@@ -80,5 +83,19 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun clearMessages() {
         _uiState.value = _uiState.value.copy(errorMessage = null, copySuccessMessage = null)
+    }
+
+    fun loadPlanDetails(planId: Int) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingDetails = true, selectedPlanDetails = null)
+            val token = tokenStore.getToken().first() ?: return@launch
+            repository.getCommunityPlanDetails(token, planId)
+                .onSuccess { plan ->
+                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, selectedPlanDetails = plan)
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, errorMessage = error.message)
+                }
+        }
     }
 }

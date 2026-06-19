@@ -15,6 +15,7 @@ import com.example.lightweight.ui.components.LightWeightHeader
 import com.example.lightweight.ui.theme.Background
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
+import com.example.lightweight.ui.viewmodel.CalendarViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -24,12 +25,17 @@ fun EditWorkoutPlanScreen(
     onCancel: () -> Unit = {},
     onSaveSuccess: () -> Unit = {},
     onEditExercise: (String) -> Unit = {},
-    viewModel: WorkoutPlanViewModel = viewModel()
+    viewModel: WorkoutPlanViewModel = viewModel(),
+    calendarViewModel: CalendarViewModel = viewModel()
 ) {
 //    val snackbarHostState = remember { SnackbarHostState() }
 //    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val plan = uiState.plans.firstOrNull { it.id == planId }
+
+    LaunchedEffect(planId) {
+        viewModel.loadPlanIntoDraft(planId)
+    }
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -62,8 +68,10 @@ fun EditWorkoutPlanScreen(
                 initialName = plan?.name ?: planName,
                 initialDescription = plan?.description ?: "",
                 initialIsPublic = plan?.is_published ?: false,
-                onCancel = onCancel,
+                onCancel = { viewModel.clearDraftPlan(); onCancel() },
                 onEditExercise = onEditExercise,
+                viewModel = viewModel,
+                calendarViewModel = calendarViewModel,
                 onSave = { name, description, _, isPublic ->
                     viewModel.updatePlan(planId, name, description, isPublic)
                     onSaveSuccess()

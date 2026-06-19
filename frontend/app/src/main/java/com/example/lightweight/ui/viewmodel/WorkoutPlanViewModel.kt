@@ -47,6 +47,9 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
     private val _draftPlan = MutableStateFlow(DraftPlanState())
     val draftPlan: StateFlow<DraftPlanState> = _draftPlan
 
+    //hinzugefügt
+    private var originalEwpIds: List<Int> = emptyList()
+
     init {
         loadPlans()
     }
@@ -139,6 +142,39 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
         _draftPlan.value = DraftPlanState()
     }
 
+    //hinzugefügt
+    fun loadPlanIntoDraft(planId: Int) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+            repository.getWorkoutPlanDetails(token, planId)
+                .onSuccess { details ->
+                    originalEwpIds = details.exercises.map { it.ewp_id }
+                    val draftExercises = details.exercises.map { ex ->
+                        DraftExercise(
+                            exerciseId = ex.exercise_id,
+                            name = ex.name,
+                            sets = ex.sets.map { s ->
+                                ExerciseSetInput(
+                                    set_number = s.set_number ?: 1,
+                                    reps = s.reps,
+                                    weight = s.weight,
+                                    machine_settings = s.machine_settings,
+                                    is_drop_set = s.is_drop_set ?: false
+                                )
+                            }
+                        )
+                    }
+                    _draftPlan.value = DraftPlanState(
+                        name = details.name,
+                        description = details.description ?: "",
+                        isPublic = details.is_published,
+                        initialized = true,
+                        selectedExercises = draftExercises
+                    )
+                }
+        }
+    }
+
     fun loadPlans() {
         viewModelScope.launch {
             _uiState.value = WorkoutPlanUiState(isLoading = true)
@@ -171,13 +207,41 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
     fun updatePlan(planId: Int, name: String, description: String, isPublic: Boolean) {
         viewModelScope.launch {
             val token = tokenStore.getToken().first() ?: return@launch
+
+            val updateResult = repository.updateWorkoutPlan(token, planId, name, description, isPublic)
+            if (updateResult.isFailure) {
+                _uiState.value = _uiState.value.copy(errorMessage = updateResult.exceptionOrNull()?.message)
+                return@launch
+            }
+
+            // alte Exercise-Zuordnungen entfernen, dann die aktuell ausgewählten neu anlegen
+            originalEwpIds.forEach { ewpId ->
+                repository.removeExerciseFromPlan(token, planId, ewpId)
+            }
+
+            _draftPlan.value.selectedExercises.forEachIndexed { index, draftExercise ->
+                val addResult = repository.addExerciseToPlan(token, planId, draftExercise.exerciseId, index + 1)
+                val addedExercise = addResult.getOrNull()
+                if (addedExercise != null && draftExercise.sets.isNotEmpty()) {
+                    repository.updateExerciseSets(token, planId, addedExercise.id, draftExercise.sets)
+                }
+            }
+
+            originalEwpIds = emptyList()
+            clearDraftPlan()
+            loadPlans()
+        }
+    }
+    /*fun updatePlan(planId: Int, name: String, description: String, isPublic: Boolean) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
             repository.updateWorkoutPlan(token, planId, name, description, isPublic)
                 .onSuccess { loadPlans() }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(errorMessage = error.message)
                 }
         }
-    }
+    }*/
 
     fun loadPlanDetails(id: Int) {
         viewModelScope.launch {

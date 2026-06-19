@@ -28,6 +28,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lightweight.ui.theme.LightWeightTheme
 import com.example.lightweight.ui.viewmodel.WorkoutPlanViewModel
 import com.example.lightweight.ui.viewmodel.CalendarViewModel
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 @Composable
 fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
@@ -127,6 +131,7 @@ fun WorkoutPlanForm(
             label = { Text("Description") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
+            maxLines = 4,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Blue,
                 unfocusedBorderColor = SurfaceVariant,
@@ -181,6 +186,74 @@ fun WorkoutPlanForm(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = {
+                                    viewModel.toggleExerciseSelection(exercise.id, exercise.name)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Blue,
+                                    uncheckedColor = SurfaceVariant,
+                                    checkmarkColor = Color.White
+                                )
+                            )
+
+                            val imageUrl = exercise.photo_url?.let { "http://10.0.2.2:3000$it" }
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = exercise.name,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(6.dp)),
+                                contentScale = ContentScale.Crop,
+                                error = painterResource(id = android.R.drawable.ic_menu_gallery),
+                                placeholder = painterResource(id = android.R.drawable.ic_menu_gallery)
+                            )
+
+                            Column(modifier = Modifier.padding(start = 8.dp)) {
+                                Text(
+                                    text = exercise.name,
+                                    color = if (isSelected) Color.White else Color.Gray
+                                )
+                                if (!exercise.description.isNullOrBlank()) {
+                                    Text(
+                                        text = exercise.description,
+                                        color = Color.Gray,
+                                        fontSize = 12.sp,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                        IconButton(
+                            onClick = { onEditExercise(exercise.name) },
+                            enabled = isSelected,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit ${exercise.name}",
+                                tint = if (isSelected) Blue else Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            /*LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(filteredExercises) { exercise ->
+                    val isSelected = draftPlanState.selectedExercises.any { it.exerciseId == exercise.id }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = isSelected,
@@ -201,6 +274,7 @@ fun WorkoutPlanForm(
                         }
                         IconButton(
                             onClick = { onEditExercise(exercise.name) },
+                            enabled = isSelected,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Icon(
@@ -212,7 +286,7 @@ fun WorkoutPlanForm(
                         }
                     }
                 }
-            }
+            }*/
         }
 
         if (showPublishDialog) {
@@ -269,6 +343,14 @@ fun WorkoutPlanForm(
             )
         }
 
+        if (planName.isBlank() || draftPlanState.selectedExercises.isEmpty()) {
+            Text(
+                text = "Enter a name and select at least one exercise to save!",
+                color = Color.Gray,
+                fontSize = 13.sp
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -284,7 +366,12 @@ fun WorkoutPlanForm(
                 Text("Cancel", color = Color.White)
             }
             Button(
-                onClick = { onSave(planName, planDescription, draftPlanState.selectedExercises.map { it.name }, isPublic) },
+                onClick = {
+                    if (planName.isNotBlank() && draftPlanState.selectedExercises.isNotEmpty()) {
+                        onSave(planName, planDescription, draftPlanState.selectedExercises.map { it.name }, isPublic)
+                    }
+                },
+                enabled = planName.isNotBlank() && draftPlanState.selectedExercises.isNotEmpty(),
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.buttonColors(containerColor = Blue),
                 shape = RoundedCornerShape(8.dp)

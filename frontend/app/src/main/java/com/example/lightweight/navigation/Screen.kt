@@ -20,4 +20,8 @@ sealed class Screen(val route: String) {
         //fun createRoute(exerciseName: String) = "exercise_detail/$exerciseName"
         fun createRoute(exerciseName: String) = "exercise_detail/${java.net.URLEncoder.encode(exerciseName, "UTF-8")}"
     }
+
+    object CommunityPlanDetail : Screen("community_plan_detail/{planId}") {
+        fun createRoute(planId: Int) = "community_plan_detail/$planId"
+    }
 }

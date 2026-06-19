@@ -30,6 +30,7 @@ import com.example.lightweight.ui.viewmodel.CommunityViewModel
 @Composable
 fun CommunityScreen(
     onNavigateTo: (String) -> Unit = {},
+    onViewPlan: (Int) -> Unit = {},
     viewModel: CommunityViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -170,7 +171,8 @@ fun CommunityScreen(
                         items(uiState.plans) { plan ->
                             CommunityPlanItem(
                                 plan = plan,
-                                onAddToMyPlans = { planToCopy = plan }
+                                onAddToMyPlans = { planToCopy = plan },
+                                onViewPlan = { onViewPlan(plan.id) }
                             )
                         }
                     }
@@ -242,12 +244,14 @@ fun CommunityScreen(
 @Composable
 fun CommunityPlanItem(
     plan: CommunityPlanResponse,
-    onAddToMyPlans: () -> Unit
+    onAddToMyPlans: () -> Unit,
+    onViewPlan: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Surface, RoundedCornerShape(12.dp))
+            .clickable { onViewPlan() }
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {

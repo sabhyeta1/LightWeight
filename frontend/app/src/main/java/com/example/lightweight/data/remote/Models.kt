@@ -31,6 +31,7 @@ data class WorkoutPlanDetailResponse(
     val name: String,
     val description: String?,
     val is_published: Boolean,
+    val owner_name: String? = null,
     val exercises: List<ExerciseInPlanResponse> = emptyList()
 )
 

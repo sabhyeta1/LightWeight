@@ -57,8 +57,15 @@ interface ApiService {
         @Body body: UpdateExerciseSetsRequest
     ): List<ExerciseSetResponse>
 
+    // Exercise wieder aus einem Plan entfernen (brauchen wir beim Bearbeiten, um alte Zuordnungen zu ersetzen)
+    @DELETE("api/workout-plan/{id}/exercise/{ewpId}")
+    suspend fun removeExerciseFromPlan(
+        @Header("Authorization") token: String,
+        @Path("id") planId: Int,
+        @Path("ewpId") ewpId: Int
+    )
+
     //community
-    //@GET("api/community")
     @GET("api/community/workout-plans")
     suspend fun getCommunityPlans(
         @Header("Authorization") token: String,
@@ -66,15 +73,19 @@ interface ApiService {
         @Query("filterType") filterType: String = "name"
     ): List<CommunityPlanResponse>
 
-    //@POST("api/community/{id}/copy")
     @POST("api/community/workout-plans/{id}/copy")
     suspend fun copyPlan(
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): WorkoutPlanResponse
 
-   // Calendar
+    @GET("api/community/workout-plans/{id}")
+    suspend fun getCommunityPlanDetails(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): WorkoutPlanDetailResponse
 
+   // Calendar
     @GET("api/calendar/sessions")
     suspend fun getCalendarSessions(
         @Header("Authorization") token: String,
