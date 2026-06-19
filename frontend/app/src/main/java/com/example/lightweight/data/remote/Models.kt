@@ -173,3 +173,16 @@ data class ExerciseSetInput(
 data class UpdateExerciseSetsRequest(
     val sets: List<ExerciseSetInput>
 )
+
+// FR-17: Profile
+data class UserProfileResponse(
+    val id: Int,
+    val username: String,
+    val display_name: String,
+    val profile_picture_url: String?
+)
+
+data class UpdateProfileRequest(
+    val display_name: String,
+    val profile_picture_url: String? = null
+)
