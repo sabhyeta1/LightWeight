@@ -35,7 +35,14 @@ fun ExerciseLibraryScreen(
         viewModel.loadExerciseLibrary()
     }
 
-    val filteredExercises = viewModel.getFilteredExercises()
+    val filteredExercises = remember(libraryState.exercises, libraryState.searchQuery) {
+        val query = libraryState.searchQuery.trim().lowercase()
+        if (query.isEmpty()) {
+            libraryState.exercises
+        } else {
+            libraryState.exercises.filter { it.name.lowercase().contains(query) }
+        }
+    }
 
     Scaffold(
         topBar = { LightWeightHeader() },
