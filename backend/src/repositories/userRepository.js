@@ -34,4 +34,17 @@ async function findUserById(id) {
   return rows[0] ? new User(rows[0]) : null;
 }
 
-module.exports = { createUser, findUserWithPasswordByUsername, findUserById };
+// FR-17: Update display_name and profile_picture_url
+async function updateUser(id, displayName, profilePictureUrl) {
+  const sql = `
+    UPDATE users
+    SET display_name = $1,
+        profile_picture_url = $2
+    WHERE id = $3
+    RETURNING id, username, display_name, profile_picture_url
+  `;
+  const { rows } = await db.query(sql, [displayName, profilePictureUrl, id]);
+  return rows[0] ? new User(rows[0]) : null;
+}
+
+module.exports = { createUser, findUserWithPasswordByUsername, findUserById, updateUser };

@@ -143,4 +143,17 @@ interface ApiService {
     suspend fun getMuscleGroups(
         @Header("Authorization") token: String
     ): List<MuscleGroupResponse>
+
+    // FR-17: Profile
+    @GET("api/user/profile")
+    suspend fun getProfile(
+        @Header("Authorization") token: String
+    ): UserProfileResponse
+
+    @PATCH("api/user/profile")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body body: UpdateProfileRequest
+    ): UserProfileResponse
+
 }
