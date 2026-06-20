@@ -22,15 +22,18 @@ import coil.compose.AsyncImage
 import com.example.lightweight.ui.components.LightWeightBottomBar
 import com.example.lightweight.ui.components.LightWeightHeader
 import com.example.lightweight.ui.theme.*
+import com.example.lightweight.ui.viewmodel.CalendarViewModel
 import com.example.lightweight.ui.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     onNavigateTo: (String) -> Unit = {},
     onLogout: () -> Unit = {},
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(),
+    calendarViewModel: CalendarViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val notificationsEnabled by calendarViewModel.notificationsEnabled.collectAsState(initial = true)
 
     var displayName by remember { mutableStateOf("") }
     var profilePictureUrl by remember { mutableStateOf("") }
@@ -39,7 +42,6 @@ fun ProfileScreen(
         viewModel.loadProfile()
     }
 
-    // Sync fields when profile data arrives from backend
     LaunchedEffect(uiState.profile) {
         uiState.profile?.let { p ->
             displayName = p.display_name
@@ -88,9 +90,8 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            // --- Avatar: uses the saved profile URL, not the live text field ---
+            // --- Avatar ---
             val savedPictureUrl = uiState.profile?.profile_picture_url
-
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -208,7 +209,53 @@ fun ProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            HorizontalDivider(color = SurfaceVariant)
+
+            // --- Notifications toggle (FR-22) ---
+            Text(
+                text = "Settings",
+                color = OnBackground,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Surface(
+                color = SurfaceVariant,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Workout Reminders",
+                            color = OnBackground,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "Push notification 1 hour before each session",
+                            color = Subtext,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Switch(
+                        checked = notificationsEnabled,
+                        onCheckedChange = { calendarViewModel.onNotificationsToggled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Blue,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Surface
+                        )
+                    )
+                }
+            }
 
             HorizontalDivider(color = SurfaceVariant)
 
