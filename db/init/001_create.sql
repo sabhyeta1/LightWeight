@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS public.workout_plan;
 DROP TABLE IF EXISTS public.muscle_groups;
 DROP TABLE IF EXISTS public.exercises;
 DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.supplements;
 
 CREATE TABLE public.users (
 	id serial NOT NULL,
@@ -117,4 +118,12 @@ CREATE TABLE public.saved_plans (
     workout_plan_id INTEGER NOT NULL REFERENCES workout_plan(id) ON DELETE CASCADE,
     saved_at TIMESTAMP NOT NULL DEFAULT now(),
     UNIQUE (user_id, workout_plan_id)
+);
+
+CREATE TABLE public.supplements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
