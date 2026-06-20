@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.lightweight.util.*
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
@@ -35,7 +36,12 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value = ProfileUiState(profile = profile)
                 }
                 .onFailure { error ->
-                    _uiState.value = ProfileUiState(errorMessage = error.message ?: "Failed to load profile")
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load your profile. Please try again."
+                    }
+                    _uiState.value = ProfileUiState(errorMessage = message)
                 }
         }
     }
@@ -53,9 +59,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value = ProfileUiState(profile = updated, saveSuccess = true)
                 }
                 .onFailure { error ->
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 400 -> "Please check your display name and try again."
+                        else -> "We couldn't save your profile. Please try again."
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Failed to save profile"
+                        errorMessage = message
                     )
                 }
         }

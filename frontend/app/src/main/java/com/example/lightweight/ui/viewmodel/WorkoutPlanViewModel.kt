@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.lightweight.util.*
 
 data class WorkoutPlanUiState(
     val isLoading: Boolean = false,
@@ -60,7 +61,12 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
 
             val planResult = repository.createWorkoutPlan(token, name, description, isPublic)
             val plan = planResult.getOrElse { error ->
-                _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                val message = when {
+                    error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                    error.httpStatusOrNull() == 400 -> "Please check the plan name and description."
+                    else -> "We couldn't create this plan. Please try again."
+                }
+                _uiState.value = _uiState.value.copy(errorMessage = message)
                 return@launch
             }
 
@@ -76,17 +82,6 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
             loadPlans()
         }
     }
-
-    /*fun createPlan(name: String, description: String, isPublic: Boolean) {
-        viewModelScope.launch {
-            val token = tokenStore.getToken().first() ?: return@launch
-            repository.createWorkoutPlan(token, name, description, isPublic)
-                .onSuccess { loadPlans() }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
-                }
-        }
-    }*/
 
     fun initDraftIfNeeded(name: String, description: String, isPublic: Boolean) {
         if (!_draftPlan.value.initialized) {
@@ -142,7 +137,6 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
         _draftPlan.value = DraftPlanState()
     }
 
-    //hinzugefügt
     fun loadPlanIntoDraft(planId: Int) {
         if (_draftPlan.value.initialized) return  // schon geladen — nicht erneut überschreiben
         viewModelScope.launch {
@@ -189,7 +183,12 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.value = WorkoutPlanUiState(plans = plans)
                 }
                 .onFailure { error ->
-                    _uiState.value = WorkoutPlanUiState(plans = emptyList())
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load your plans. Please try again."
+                    }
+                    _uiState.value = WorkoutPlanUiState(plans = emptyList(), errorMessage = message)
                 }
         }
     }
@@ -200,7 +199,12 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
             repository.deleteWorkoutPlan(token, id)
                 .onSuccess { loadPlans() }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan no longer exists. It may have already been deleted."
+                        else -> "We couldn't delete this plan. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -211,7 +215,15 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
 
             val updateResult = repository.updateWorkoutPlan(token, planId, name, description, isPublic)
             if (updateResult.isFailure) {
-                _uiState.value = _uiState.value.copy(errorMessage = updateResult.exceptionOrNull()?.message)
+                val error = updateResult.exceptionOrNull()
+                val message = when {
+                    error?.isNetworkError() == true -> "No internet connection. Please check your network and try again."
+                    error?.httpStatusOrNull() == 404 -> "This plan no longer exists."
+                    error?.httpStatusOrNull() == 403 -> "You don't have permission to edit this plan."
+                    error?.httpStatusOrNull() == 400 -> "Please check the plan name and description."
+                    else -> "We couldn't save your changes. Please try again."
+                }
+                _uiState.value = _uiState.value.copy(errorMessage = message)
                 return@launch
             }
 
@@ -233,16 +245,6 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
             loadPlans()
         }
     }
-    /*fun updatePlan(planId: Int, name: String, description: String, isPublic: Boolean) {
-        viewModelScope.launch {
-            val token = tokenStore.getToken().first() ?: return@launch
-            repository.updateWorkoutPlan(token, planId, name, description, isPublic)
-                .onSuccess { loadPlans() }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
-                }
-        }
-    }*/
 
     fun loadPlanDetails(id: Int) {
         viewModelScope.launch {
@@ -253,7 +255,12 @@ class WorkoutPlanViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.value = _uiState.value.copy(isLoading = false, currentPlanDetails = details)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan no longer exists."
+                        else -> "We couldn't load this plan. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
                 }
         }
     }
