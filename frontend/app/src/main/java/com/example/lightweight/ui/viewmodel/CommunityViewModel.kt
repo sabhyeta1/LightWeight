@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.lightweight.util.*
 
 data class CommunityUiState(
     val isLoading: Boolean = false,
@@ -51,7 +52,12 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.value = _uiState.value.copy(isLoading = false, plans = plans)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = error.message)
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load community plans. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
                 }
         }
     }
@@ -76,7 +82,12 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan is no longer available."
+                        else -> "We couldn't add this plan to your plans. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -94,7 +105,12 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.value = _uiState.value.copy(isLoadingDetails = false, selectedPlanDetails = plan)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan is no longer available."
+                        else -> "We couldn't load this plan. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, errorMessage = message)
                 }
         }
     }
