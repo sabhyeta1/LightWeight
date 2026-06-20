@@ -33,6 +33,7 @@ import com.example.lightweight.ui.viewmodel.CommunityViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 import com.example.lightweight.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.flow.first
+import com.example.lightweight.ui.screens.community.SavedPlansScreen
 
 @Composable
 fun Navigation(navController: NavHostController) {
@@ -135,6 +136,7 @@ fun Navigation(navController: NavHostController) {
             MyPlansScreen(
                 viewModel = workoutPlanViewModel,
                 onNavigateToCreate = { navController.navigate(Screen.CreatePlan.route) },
+                onNavigateToSaved = { navController.navigate(Screen.SavedPlans.route) },
                 onViewPlan = { planId, planName ->
                     navController.navigate(Screen.WorkoutPlanDetail.createRoute(planId, planName))
                 },
@@ -143,6 +145,16 @@ fun Navigation(navController: NavHostController) {
                 },
                 onDeletePlan = {},
                 onNavigateTo = { route -> navController.navigate(route) }
+            )
+        }
+
+        composable(Screen.SavedPlans.route) {
+            SavedPlansScreen(
+                onNavigateTo = { route -> navController.navigate(route) },
+                onViewPlan = { planId ->
+                    navController.navigate(Screen.CommunityPlanDetail.createRoute(planId))
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -208,7 +220,6 @@ fun Navigation(navController: NavHostController) {
             arguments = listOf(navArgument("exerciseName") { type = NavType.StringType })
         ) { backStackEntry ->
             val exerciseName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("exerciseName") ?: "", "UTF-8")
-            //val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
             ExerciseDetailScreen(
                 exerciseName = exerciseName,
                 onSave = { navController.popBackStack() },
@@ -216,13 +227,6 @@ fun Navigation(navController: NavHostController) {
                 viewModel = workoutPlanViewModel,
                 calendarViewModel = calendarViewModel
             )
-            /*backStackEntry ->
-            val exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: ""
-            ExerciseDetailScreen(
-                exerciseName = exerciseName,
-                onSave = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
-            )*/
         }
 
         // FR-12, FR-13, FR-14, FR-15 — Calendar

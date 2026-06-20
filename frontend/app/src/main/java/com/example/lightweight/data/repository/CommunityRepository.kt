@@ -37,4 +37,31 @@ class CommunityRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun getSavedPlans(token: String): Result<List<CommunityPlanResponse>> {
+        return try {
+            val plans = RetrofitClient.api.getSavedPlans("Bearer $token")
+            Result.success(plans)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun savePlan(token: String, planId: Int): Result<Unit> {
+        return try {
+            RetrofitClient.api.savePlan("Bearer $token", planId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun unsavePlan(token: String, planId: Int): Result<Unit> {
+        return try {
+            RetrofitClient.api.unsavePlan("Bearer $token", planId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

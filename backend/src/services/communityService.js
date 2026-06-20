@@ -18,4 +18,25 @@ const copyCommunityPlan = async (planId, userId) => {
   return await communityRepository.copyPublishedPlan(planId, userId);
 };
 
-module.exports = { getCommunityPlans, getCommunityPlanById, copyCommunityPlan };
+const savePlan = async (planId, userId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  return await communityRepository.savePlan(userId, planId);
+};
+
+const unsavePlan = async (planId, userId) => {
+  if (!Number.isInteger(planId)) throw new Error("Invalid plan id");
+  return await communityRepository.unsavePlan(userId, planId);
+};
+
+const getSavedPlans = async (userId) => {
+  return await communityRepository.findSavedPlans(userId);
+};
+
+module.exports = {
+  getCommunityPlans,
+  getCommunityPlanById,
+  copyCommunityPlan,
+  savePlan,
+  unsavePlan,
+  getSavedPlans,
+};

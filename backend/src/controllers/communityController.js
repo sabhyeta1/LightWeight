@@ -51,4 +51,43 @@ const copyCommunityPlan = async (req, res) => {
   }
 };
 
-module.exports = { getCommunityPlans, getCommunityPlanById, copyCommunityPlan };
+const savePlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    await communityService.savePlan(planId, userId);
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const unsavePlan = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const planId = Number(req.params.id);
+    await communityService.unsavePlan(planId, userId);
+    res.status(204).send();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const getSavedPlans = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const plans = await communityService.getSavedPlans(userId);
+    res.status(200).json(plans);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  getCommunityPlans,
+  getCommunityPlanById,
+  copyCommunityPlan,
+  savePlan,
+  unsavePlan,
+  getSavedPlans,
+};
