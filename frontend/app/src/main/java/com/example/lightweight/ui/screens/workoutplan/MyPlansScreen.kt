@@ -31,6 +31,7 @@ import androidx.compose.runtime.*
 @Composable
 fun MyPlansScreen(
     onNavigateToCreate: () -> Unit = {},
+    onNavigateToSaved: () -> Unit = {},
     onViewPlan: (Int, String) -> Unit = { _, _ -> },
     onEditPlan: (Int, String) -> Unit = { _, _ -> },
     onDeletePlan: (String) -> Unit = {},
@@ -101,6 +102,19 @@ fun MyPlansScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onNavigateToSaved,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Surface),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Saved Plans", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onNavigateToCreate,
