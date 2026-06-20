@@ -27,6 +27,7 @@ import com.example.lightweight.ui.viewmodel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     onNavigateTo: (String) -> Unit = {},
+    onNavigateToWater: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -211,6 +212,15 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             HorizontalDivider(color = SurfaceVariant)
+
+            Button(
+                onClick = onNavigateToWater,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Surface),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Water Tracking", color = Color.White, fontSize = 16.sp)
+            }
 
             // --- Logout ---
             Button(

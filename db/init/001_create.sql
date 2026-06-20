@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS public.workout_plan;
 DROP TABLE IF EXISTS public.muscle_groups;
 DROP TABLE IF EXISTS public.exercises;
 DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.water_goals;
+DROP TABLE IF EXISTS public.water_intake_logs;
 
 CREATE TABLE public.users (
 	id serial NOT NULL,
@@ -108,4 +110,17 @@ CREATE TABLE public.calendar_sessions (
 	CONSTRAINT calendar_sessions_users_fk FOREIGN KEY (user_id) REFERENCES public.users(id),
 	CONSTRAINT calendar_sessions_workout_plan_fk FOREIGN KEY (workout_plan_id) REFERENCES public.workout_plan(id),
 	CONSTRAINT calendar_sessions_recurrence_rules_fk FOREIGN KEY (recurrence_rule_id) REFERENCES public.recurrence_rules(id) ON DELETE SET NULL
+);
+
+CREATE TABLE public.water_goals (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    target_ml INTEGER NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.water_intake_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount_ml INTEGER NOT NULL,
+    logged_at TIMESTAMP NOT NULL DEFAULT now()
 );

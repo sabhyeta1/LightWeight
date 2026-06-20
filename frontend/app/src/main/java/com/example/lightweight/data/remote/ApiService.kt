@@ -156,4 +156,28 @@ interface ApiService {
         @Body body: UpdateProfileRequest
     ): UserProfileResponse
 
+    // Water Tracking
+    @GET("api/water/status")
+    suspend fun getWaterStatus(
+        @Header("Authorization") token: String
+    ): WaterStatusResponse
+
+    @PUT("api/water/goal")
+    suspend fun setWaterGoal(
+        @Header("Authorization") token: String,
+        @Body body: SetWaterGoalRequest
+    ): WaterGoalResponse
+
+    @POST("api/water/intake")
+    suspend fun addWaterIntake(
+        @Header("Authorization") token: String,
+        @Body body: AddWaterIntakeRequest
+    ): WaterLogResponse
+
+    @DELETE("api/water/intake/{id}")
+    suspend fun deleteWaterIntake(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
 }
