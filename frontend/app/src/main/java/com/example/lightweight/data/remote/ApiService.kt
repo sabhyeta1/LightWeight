@@ -156,4 +156,21 @@ interface ApiService {
         @Body body: UpdateProfileRequest
     ): UserProfileResponse
 
+    // Supplements
+    @GET("api/supplement")
+    suspend fun getSupplements(
+        @Header("Authorization") token: String
+    ): List<SupplementResponse>
+
+    @POST("api/supplement")
+    suspend fun createSupplement(
+        @Header("Authorization") token: String,
+        @Body body: CreateSupplementRequest
+    ): SupplementResponse
+
+    @DELETE("api/supplement/{id}")
+    suspend fun deleteSupplement(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
 }

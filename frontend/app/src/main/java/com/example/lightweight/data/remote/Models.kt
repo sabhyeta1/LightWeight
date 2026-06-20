@@ -186,3 +186,17 @@ data class UpdateProfileRequest(
     val display_name: String,
     val profile_picture_url: String? = null
 )
+
+// FR-25: Supplements
+data class SupplementResponse(
+    val id: Int,
+    val user_id: Int,
+    val name: String,
+    val dosage: String,
+    val created_at: String? = null
+)
+
+data class CreateSupplementRequest(
+    val name: String,
+    val dosage: String
+)

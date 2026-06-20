@@ -33,6 +33,7 @@ import com.example.lightweight.ui.viewmodel.CommunityViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 import com.example.lightweight.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.flow.first
+import com.example.lightweight.ui.screens.profile.SupplementsScreen
 
 @Composable
 fun Navigation(navController: NavHostController) {
@@ -246,6 +247,7 @@ fun Navigation(navController: NavHostController) {
             val profileViewModel: ProfileViewModel = viewModel()
             ProfileScreen(
                 onNavigateTo = { route -> navController.navigate(route) },
+                onNavigateToSupplements = { navController.navigate(Screen.Supplements.route) },
                 onLogout = {
                     authViewModel.logout()
                     workoutPlanViewModel.clearPlans()
@@ -254,6 +256,13 @@ fun Navigation(navController: NavHostController) {
                     }
                 },
                 viewModel = profileViewModel
+            )
+        }
+
+        composable(Screen.Supplements.route) {
+            SupplementsScreen(
+                onNavigateTo = { route -> navController.navigate(route) },
+                onBack = { navController.popBackStack() }
             )
         }
     }

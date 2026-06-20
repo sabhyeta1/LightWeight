@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS public.workout_plan;
 DROP TABLE IF EXISTS public.muscle_groups;
 DROP TABLE IF EXISTS public.exercises;
 DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.supplements;
 
 CREATE TABLE public.users (
 	id serial NOT NULL,
@@ -108,4 +109,12 @@ CREATE TABLE public.calendar_sessions (
 	CONSTRAINT calendar_sessions_users_fk FOREIGN KEY (user_id) REFERENCES public.users(id),
 	CONSTRAINT calendar_sessions_workout_plan_fk FOREIGN KEY (workout_plan_id) REFERENCES public.workout_plan(id),
 	CONSTRAINT calendar_sessions_recurrence_rules_fk FOREIGN KEY (recurrence_rule_id) REFERENCES public.recurrence_rules(id) ON DELETE SET NULL
+);
+
+CREATE TABLE public.supplements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
