@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
+import com.example.lightweight.data.remote.RetrofitClient
+
 @Composable
 fun CreateWorkoutPlanScreen(
     onSave: () -> Unit = {},
@@ -207,7 +209,7 @@ fun WorkoutPlanForm(
                                 )
                             )
 
-                            val imageUrl = exercise.photo_url?.let { "http://10.0.2.2:3000$it" }
+                            val imageUrl = exercise.photo_url?.let { RetrofitClient.BASE_URL.trimEnd('/') + it }
                             AsyncImage(
                                 model = imageUrl,
                                 contentDescription = exercise.name,
