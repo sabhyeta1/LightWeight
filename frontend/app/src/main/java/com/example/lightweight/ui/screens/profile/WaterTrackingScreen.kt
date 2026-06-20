@@ -37,6 +37,7 @@ fun WaterTrackingScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showGoalDialog by remember { mutableStateOf(false) }
     var goalInput by remember { mutableStateOf("") }
+    var customAmount by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = { LightWeightHeader() },
@@ -109,12 +110,19 @@ fun WaterTrackingScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                Text(
+                    text = "Tap \"+\" to log 250 ml · Tap a glass to remove it",
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
                 val glassesPerRow = 6
                 val totalSlots = uiState.logs.size + 1 // +1 für das "+"-Glas
                 val rowCount = (totalSlots + glassesPerRow - 1) / glassesPerRow
 
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 200.dp),
+                    modifier = Modifier.heightIn(max = 280.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(rowCount) { rowIndex ->
@@ -126,11 +134,20 @@ fun WaterTrackingScreen(
                                 when {
                                     index < uiState.logs.size -> {
                                         val log = uiState.logs[index]
-                                        IconButton(
-                                            onClick = { viewModel.deleteIntake(log.id) },
-                                            modifier = Modifier.size(36.dp)
-                                        ) {
-                                            WaterGlass(filled = true)
+                                        val fraction = (log.amount_ml / 250f).coerceIn(0f, 1f)
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            IconButton(
+                                                onClick = { viewModel.deleteIntake(log.id) },
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                WaterGlass(fillFraction = fraction)
+                                            }
+
+                                            Text(
+                                                text = "${log.amount_ml}ml",
+                                                color = Color.Gray,
+                                                fontSize = 10.sp
+                                            )
                                         }
                                     }
                                     index == uiState.logs.size -> {
@@ -138,12 +155,46 @@ fun WaterTrackingScreen(
                                             onClick = { viewModel.addGlass() },
                                             modifier = Modifier.size(36.dp)
                                         ) {
-                                            WaterGlass(filled = false, showPlus = true)
+                                            WaterGlass(fillFraction = 0f, showPlus = true)
                                         }
                                     }
                                 }
                             }
                         }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = customAmount,
+                        onValueChange = { customAmount = it },
+                        label = { Text("Custom (ml)") },
+                        modifier = Modifier.weight(1f),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Blue,
+                            unfocusedBorderColor = SurfaceVariant,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                    Button(
+                        onClick = {
+                            val amount = customAmount.toIntOrNull()
+                            if (amount != null && amount > 0) {
+                                viewModel.addIntake(amount)
+                                customAmount = ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Blue),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Log", color = Color.White)
                     }
                 }
             }
@@ -214,21 +265,35 @@ fun WaterTrackingScreen(
 }
 
 @Composable
-fun WaterGlass(filled: Boolean, showPlus: Boolean = false, modifier: Modifier = Modifier) {
+fun WaterGlass(fillFraction: Float = 0f, showPlus: Boolean = false, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(
+        topStart = 12.dp,
+        topEnd = 12.dp,
+        bottomStart = 6.dp,
+        bottomEnd = 6.dp
+    )
     Box(
         modifier = modifier
             .size(36.dp)
-            .clip(
-                RoundedCornerShape(
-                    topStart = 12.dp,
-                    topEnd = 12.dp,
-                    bottomStart = 6.dp,
-                    bottomEnd = 6.dp
-                )
-            )
-            .background(if (filled) Blue else SurfaceVariant),
-        contentAlignment = Alignment.Center
+            .clip(shape)
+//                RoundedCornerShape(
+//                    topStart = 12.dp,
+//                    topEnd = 12.dp,
+//                    bottomStart = 6.dp,
+//                    bottomEnd = 6.dp
+//                )
+            //)
+            .background(SurfaceVariant),
+        contentAlignment = Alignment.BottomCenter
     ) {
+        if (fillFraction > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(fillFraction.coerceIn(0f, 1f))
+                    .background(Blue)
+            )
+        }
         if (showPlus) {
             Icon(
                 imageVector = Icons.Default.Add,
