@@ -214,3 +214,17 @@ data class SetWaterGoalRequest(
 data class AddWaterIntakeRequest(
     val amount_ml: Int? = null
 )
+
+// FR-25: Supplements
+data class SupplementResponse(
+    val id: Int,
+    val user_id: Int,
+    val name: String,
+    val dosage: String,
+    val created_at: String? = null
+)
+
+data class CreateSupplementRequest(
+    val name: String,
+    val dosage: String
+)

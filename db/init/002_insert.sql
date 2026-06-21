@@ -15,34 +15,33 @@ INSERT INTO muscle_groups (name) VALUES
 
 -- EXERISES
 INSERT INTO exercises (name, description, photo_url) VALUES
-('Bench Press', 'Barbell chest press on flat bench.', '/static/images/ic_launcher-playstore.png'),
-('Incline Dumbbell Press', 'Incline dumbbell chest press.', '/static/images/ic_launcher-playstore.png'),
-('Chest Fly', 'Machine or cable chest fly movement.', '/static/images/ic_launcher-playstore.png'),
+('Bench Press', 'Barbell chest press on flat bench.', '/static/images/bench_press.png'),
+('Incline Dumbbell Press', 'Incline dumbbell chest press.', '/static/images/incline_dumbbell_press.png'),
+('Chest Fly', 'Machine or cable chest fly movement.', '/static/images/chest_fly.png'),
 
-('Pull Up', 'Vertical pulling exercise for the back.', '/static/images/ic_launcher-playstore.png'),
-('Lat Pulldown', 'Cable lat pulldown exercise.', '/static/images/ic_launcher-playstore.png'),
-('Barbell Row', 'Bent over rowing movement.', '/static/images/ic_launcher-playstore.png'),
+('Pull Up', 'Vertical pulling exercise for the back.', '/static/images/pull_up.png'),
+('Lat Pulldown', 'Cable lat pulldown exercise.', '/static/images/lat_pulldown.png'),
+('Barbell Row', 'Bent over rowing movement.', '/static/images/barbell_row.png'),
 
-('Shoulder Press', 'Overhead shoulder press.', '/static/images/ic_launcher-playstore.png'),
-('Lateral Raise', 'Isolation exercise for side delts.', '/static/images/ic_launcher-playstore.png'),
+('Shoulder Press', 'Overhead shoulder press.', '/static/images/shoulder_press.png'),
+('Lateral Raise', 'Isolation exercise for side delts.', '/static/images/lateral_raise.png'),
 
-('Bicep Curl', 'Classic dumbbell bicep curl.', '/static/images/ic_launcher-playstore.png'),
-('Hammer Curl', 'Neutral grip dumbbell curl.', '/static/images/ic_launcher-playstore.png'),
+('Bicep Curl', 'Classic dumbbell bicep curl.', '/static/images/bicep_curl.png'),
+('Hammer Curl', 'Neutral grip dumbbell curl.', '/static/images/hammer_curl.png'),
 
-('Tricep Pushdown', 'Cable tricep pushdown.', '/static/images/ic_launcher-playstore.png'),
-('Overhead Tricep Extension', 'Overhead tricep extension.', '/static/images/ic_launcher-playstore.png'),
+('Tricep Pushdown', 'Cable tricep pushdown.', '/static/images/tricep_pushdown.png'),
+('Overhead Tricep Extension', 'Overhead tricep extension.', '/static/images/overhead_tricep_extension.png'),
 
-('Squat', 'Barbell squat for lower body.', '/static/images/ic_launcher-playstore.png'),
-('Leg Press', 'Machine based leg press.', '/static/images/ic_launcher-playstore.png'),
-('Romanian Deadlift', 'Hip hinge exercise for hamstrings/glutes.', '/static/images/ic_launcher-playstore.png'),
-('Leg Extension', 'Quad isolation exercise.', '/static/images/ic_launcher-playstore.png'),
-('Leg Curl', 'Hamstring isolation exercise.', '/static/images/ic_launcher-playstore.png'),
+('Squat', 'Barbell squat for lower body.', '/static/images/squat.png'),
+('Leg Press', 'Machine based leg press.', '/static/images/leg_press.png'),
+('Romanian Deadlift', 'Hip hinge exercise for hamstrings/glutes.', '/static/images/romanian_deadlift.png'),
+('Leg Extension', 'Quad isolation exercise.', '/static/images/leg_extension.png'),
+('Leg Curl', 'Hamstring isolation exercise.', '/static/images/leg_curl.png'),
 
-('Standing Calf Raise', 'Calf isolation movement.', '/static/images/ic_launcher-playstore.png'),
+('Standing Calf Raise', 'Calf isolation movement.', '/static/images/standing_calf_raise.png'),
 
-('Crunch', 'Abdominal crunch exercise.', '/static/images/ic_launcher-playstore.png'),
-('Plank', 'Static core stabilization exercise.', '/static/images/ic_launcher-playstore.png');
-
+('Crunch', 'Abdominal crunch exercise.', '/static/images/crunch.png'),
+('Plank', 'Static core stabilization exercise.', '/static/images/plank.png');
 
 
 -- EXERCISE <-> MUSCLE GROUP LINKS

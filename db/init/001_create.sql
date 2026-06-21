@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS public.saved_plans;
 DROP TABLE IF EXISTS public.calendar_sessions;
 DROP TABLE IF EXISTS public.recurrence_rules;
 DROP TABLE IF EXISTS public.exercise_sets;
@@ -9,6 +10,7 @@ DROP TABLE IF EXISTS public.exercises;
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.water_goals;
 DROP TABLE IF EXISTS public.water_intake_logs;
+DROP TABLE IF EXISTS public.supplements;
 
 CREATE TABLE public.users (
 	id serial NOT NULL,
@@ -123,4 +125,20 @@ CREATE TABLE public.water_intake_logs (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     amount_ml INTEGER NOT NULL,
     logged_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.saved_plans (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    workout_plan_id INTEGER NOT NULL REFERENCES workout_plan(id) ON DELETE CASCADE,
+    saved_at TIMESTAMP NOT NULL DEFAULT now(),
+    UNIQUE (user_id, workout_plan_id)
+);
+
+CREATE TABLE public.supplements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    dosage TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );

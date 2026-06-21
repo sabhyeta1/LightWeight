@@ -17,7 +17,6 @@ sealed class Screen(val route: String) {
         fun createRoute(planId: Int, planName: String) = "edit_plan/$planId/$planName"
     }
     object ExerciseDetail : Screen("exercise_detail/{exerciseName}") {
-        //fun createRoute(exerciseName: String) = "exercise_detail/$exerciseName"
         fun createRoute(exerciseName: String) = "exercise_detail/${java.net.URLEncoder.encode(exerciseName, "UTF-8")}"
     }
 
@@ -26,4 +25,6 @@ sealed class Screen(val route: String) {
     }
 
     object WaterTracking : Screen("water_tracking")
+    object Supplements : Screen("supplements")
+    object SavedPlans : Screen("saved_plans")
 }

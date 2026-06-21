@@ -28,6 +28,7 @@ import com.example.lightweight.ui.viewmodel.ProfileViewModel
 fun ProfileScreen(
     onNavigateTo: (String) -> Unit = {},
     onNavigateToWater: () -> Unit = {},
+    onNavigateToSupplements: () -> Unit = {},
     onLogout: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -220,6 +221,15 @@ fun ProfileScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Water Tracking", color = Color.White, fontSize = 16.sp)
+            }
+
+            Button(
+                onClick = onNavigateToSupplements,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Surface),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Supplements", color = Color.White, fontSize = 16.sp)
             }
 
             // --- Logout ---
