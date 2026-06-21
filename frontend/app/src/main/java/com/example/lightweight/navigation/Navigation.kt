@@ -33,6 +33,7 @@ import com.example.lightweight.ui.viewmodel.CommunityViewModel
 import com.example.lightweight.ui.viewmodel.WorkoutPlanUiState
 import com.example.lightweight.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.flow.first
+import com.example.lightweight.ui.screens.profile.WaterTrackingScreen
 import com.example.lightweight.ui.screens.profile.SupplementsScreen
 import com.example.lightweight.ui.screens.community.SavedPlansScreen
 
@@ -251,6 +252,7 @@ fun Navigation(navController: NavHostController) {
             val profileViewModel: ProfileViewModel = viewModel()
             ProfileScreen(
                 onNavigateTo = { route -> navController.navigate(route) },
+                onNavigateToWater = { navController.navigate(Screen.WaterTracking.route) },
                 onNavigateToSupplements = { navController.navigate(Screen.Supplements.route) },
                 onLogout = {
                     authViewModel.logout()
@@ -263,6 +265,13 @@ fun Navigation(navController: NavHostController) {
             )
         }
 
+        composable(Screen.WaterTracking.route) {
+            WaterTrackingScreen(
+                onNavigateTo = { route -> navController.navigate(route) },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        
         composable(Screen.Supplements.route) {
             SupplementsScreen(
                 onNavigateTo = { route -> navController.navigate(route) },

@@ -24,6 +24,7 @@ sealed class Screen(val route: String) {
         fun createRoute(planId: Int) = "community_plan_detail/$planId"
     }
 
+    object WaterTracking : Screen("water_tracking")
     object Supplements : Screen("supplements")
     object SavedPlans : Screen("saved_plans")
 }

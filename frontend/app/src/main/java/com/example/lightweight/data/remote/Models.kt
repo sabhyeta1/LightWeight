@@ -187,6 +187,34 @@ data class UpdateProfileRequest(
     val profile_picture_url: String? = null
 )
 
+// Water Tracking
+data class WaterLogResponse(
+    val id: Int,
+    val user_id: Int,
+    val amount_ml: Int,
+    val logged_at: String? = null
+)
+
+data class WaterStatusResponse(
+    val target_ml: Int?,
+    val total_ml: Int,
+    val logs: List<WaterLogResponse> = emptyList()
+)
+
+data class WaterGoalResponse(
+    val user_id: Int,
+    val target_ml: Int,
+    val updated_at: String? = null
+)
+
+data class SetWaterGoalRequest(
+    val target_ml: Int
+)
+
+data class AddWaterIntakeRequest(
+    val amount_ml: Int? = null
+)
+
 // FR-25: Supplements
 data class SupplementResponse(
     val id: Int,
