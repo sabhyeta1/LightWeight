@@ -46,7 +46,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun saveProfile(displayName: String, profilePictureUrl: String?) {
+    fun saveProfile(displayName: String) {
         if (displayName.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Display name cannot be empty")
             return
@@ -54,7 +54,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val token = tokenStore.getToken().first() ?: return@launch
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, saveSuccess = false)
-            repository.updateProfile(token, displayName.trim(), profilePictureUrl?.ifBlank { null })
+            repository.updateProfile(token, displayName.trim())
                 .onSuccess { updated ->
                     _uiState.value = ProfileUiState(profile = updated, saveSuccess = true)
                 }
@@ -67,6 +67,58 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = message
+                    )
+                }
+        }
+    }
+
+    fun uploadProfilePicture(imagePart: okhttp3.MultipartBody.Part) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                saveSuccess = false
+            )
+
+            repository.uploadProfilePicture(token, imagePart)
+                .onSuccess { updated ->
+                    _uiState.value = ProfileUiState(
+                        profile = updated,
+                        saveSuccess = true
+                    )
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "We couldn't upload your profile picture. Please try again."
+                    )
+                }
+        }
+    }
+
+    fun deleteProfilePicture() {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                saveSuccess = false
+            )
+
+            repository.deleteProfilePicture(token)
+                .onSuccess { updated ->
+                    _uiState.value = ProfileUiState(
+                        profile = updated,
+                        saveSuccess = true
+                    )
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "We couldn't delete your profile picture. Please try again."
                     )
                 }
         }

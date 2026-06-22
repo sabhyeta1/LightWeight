@@ -183,8 +183,7 @@ data class UserProfileResponse(
 )
 
 data class UpdateProfileRequest(
-    val display_name: String,
-    val profile_picture_url: String? = null
+    val display_name: String
 )
 
 // Water Tracking

@@ -1,5 +1,6 @@
 package com.example.lightweight.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 interface ApiService {
@@ -168,10 +169,22 @@ interface ApiService {
         @Header("Authorization") token: String
     ): UserProfileResponse
 
-    @PATCH("api/user/profile")
+    @PUT("api/user/profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
         @Body body: UpdateProfileRequest
+    ): UserProfileResponse
+
+    @Multipart
+    @POST("api/user/profile-picture")
+    suspend fun uploadProfilePicture(
+        @Header("Authorization") token: String,
+        @Part image: MultipartBody.Part
+    ): UserProfileResponse
+
+    @DELETE("api/user/profile-picture")
+    suspend fun deleteProfilePicture(
+        @Header("Authorization") token: String
     ): UserProfileResponse
 
     // Water Tracking
