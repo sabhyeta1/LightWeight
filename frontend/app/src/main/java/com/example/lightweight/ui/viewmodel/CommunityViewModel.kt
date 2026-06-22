@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.lightweight.util.*
 
 data class CommunityUiState(
     val isLoading: Boolean = false,
@@ -20,7 +21,10 @@ data class CommunityUiState(
     val errorMessage: String? = null,
     val copySuccessMessage: String? = null,
     val isLoadingDetails: Boolean = false,
-    val selectedPlanDetails: WorkoutPlanDetailResponse? = null
+    val selectedPlanDetails: WorkoutPlanDetailResponse? = null,
+    val savedPlans: List<CommunityPlanResponse> = emptyList(),
+    val savedPlanIds: Set<Int> = emptySet(),
+    val isLoadingSaved: Boolean = false
 )
 
 class CommunityViewModel(application: Application) : AndroidViewModel(application) {
@@ -36,6 +40,7 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         loadPlans()
+        loadSavedPlans()
     }
 
     fun loadPlans(search: String = "", filterType: String = "name") {
@@ -51,7 +56,12 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.value = _uiState.value.copy(isLoading = false, plans = plans)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = error.message)
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load community plans. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
                 }
         }
     }
@@ -76,7 +86,12 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan is no longer available."
+                        else -> "We couldn't add this plan to your plans. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -94,8 +109,54 @@ class CommunityViewModel(application: Application) : AndroidViewModel(applicatio
                     _uiState.value = _uiState.value.copy(isLoadingDetails = false, selectedPlanDetails = plan)
                 }
                 .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This plan is no longer available."
+                        else -> "We couldn't load this plan. Please try again."
+                    }
+                    _uiState.value = _uiState.value.copy(isLoadingDetails = false, errorMessage = message)
                 }
+        }
+    }
+
+    fun loadSavedPlans() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingSaved = true)
+            val token = tokenStore.getToken().first() ?: return@launch
+            repository.getSavedPlans(token)
+                .onSuccess { plans ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingSaved = false,
+                        savedPlans = plans,
+                        savedPlanIds = plans.map { it.id }.toSet()
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(isLoadingSaved = false, errorMessage = error.message)
+                }
+        }
+    }
+
+    fun toggleSavePlan(planId: Int) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+            val isCurrentlySaved = _uiState.value.savedPlanIds.contains(planId)
+            if (isCurrentlySaved) {
+                repository.unsavePlan(token, planId)
+                    .onSuccess {
+                        _uiState.value = _uiState.value.copy(
+                            savedPlanIds = _uiState.value.savedPlanIds - planId,
+                            savedPlans = _uiState.value.savedPlans.filter { it.id != planId }
+                        )
+                    }
+            } else {
+                repository.savePlan(token, planId)
+                    .onSuccess {
+                        _uiState.value = _uiState.value.copy(
+                            savedPlanIds = _uiState.value.savedPlanIds + planId
+                        )
+                    }
+            }
         }
     }
 }

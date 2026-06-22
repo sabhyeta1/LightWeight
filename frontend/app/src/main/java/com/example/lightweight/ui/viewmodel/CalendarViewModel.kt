@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.example.lightweight.util.*
 
 data class CalendarUiState(
     val isLoading: Boolean = false,
@@ -94,10 +95,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     )
                 }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(
-                        isLoading = false,
-                        errorMessage = error.message
-                    )
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load your calendar. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(isLoading = false, errorMessage = message)
                 }
         }
     }
@@ -122,7 +125,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     loadSchedule()
                 }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't schedule this session. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -141,7 +149,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     loadSchedule()
                 }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This session no longer exists."
+                        else -> "We couldn't update this session. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -160,7 +173,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     loadSchedule()
                 }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This series no longer exists."
+                        else -> "We couldn't update this series. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -171,7 +189,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
             repository.deleteSession(token, sessionId)
                 .onSuccess { loadSchedule() }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This session no longer exists. It may have already been removed."
+                        else -> "We couldn't remove this session. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -208,7 +231,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     loadSchedule(newUntil)
                 }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't schedule these recurring sessions. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -219,7 +247,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
             repository.deleteRecurrence(token, recurrenceId)
                 .onSuccess { loadSchedule() }
                 .onFailure { error ->
-                    _calendarState.value = _calendarState.value.copy(errorMessage = error.message)
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 404 -> "This series no longer exists. It may have already been removed."
+                        else -> "We couldn't remove this series. Please try again."
+                    }
+                    _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
         }
     }
@@ -264,9 +297,14 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     )
                 }
                 .onFailure { error ->
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load the exercise library. Please try again."
+                    }
                     _libraryState.value = _libraryState.value.copy(
                         isLoading = false,
-                        errorMessage = error.message
+                        errorMessage = message
                     )
                 }
         }

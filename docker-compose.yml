@@ -19,6 +19,8 @@ services:
       - "${BACKEND_PORT}:3000"
     depends_on:
       - db
+    volumes:
+      - ./backend/public/uploads:/app/public/uploads
 
 volumes:
   db_data:

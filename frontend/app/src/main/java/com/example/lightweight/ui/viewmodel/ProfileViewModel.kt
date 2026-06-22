@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.lightweight.util.*
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
@@ -35,12 +36,17 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     _uiState.value = ProfileUiState(profile = profile)
                 }
                 .onFailure { error ->
-                    _uiState.value = ProfileUiState(errorMessage = error.message ?: "Failed to load profile")
+                    val message = if (error.isNetworkError()) {
+                        "No internet connection. Please check your network and try again."
+                    } else {
+                        "We couldn't load your profile. Please try again."
+                    }
+                    _uiState.value = ProfileUiState(errorMessage = message)
                 }
         }
     }
 
-    fun saveProfile(displayName: String, profilePictureUrl: String?) {
+    fun saveProfile(displayName: String) {
         if (displayName.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Display name cannot be empty")
             return
@@ -48,14 +54,71 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val token = tokenStore.getToken().first() ?: return@launch
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null, saveSuccess = false)
-            repository.updateProfile(token, displayName.trim(), profilePictureUrl?.ifBlank { null })
+            repository.updateProfile(token, displayName.trim())
                 .onSuccess { updated ->
                     _uiState.value = ProfileUiState(profile = updated, saveSuccess = true)
                 }
                 .onFailure { error ->
+                    val message = when {
+                        error.isNetworkError() -> "No internet connection. Please check your network and try again."
+                        error.httpStatusOrNull() == 400 -> "Please check your display name and try again."
+                        else -> "We couldn't save your profile. Please try again."
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = error.message ?: "Failed to save profile"
+                        errorMessage = message
+                    )
+                }
+        }
+    }
+
+    fun uploadProfilePicture(imagePart: okhttp3.MultipartBody.Part) {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                saveSuccess = false
+            )
+
+            repository.uploadProfilePicture(token, imagePart)
+                .onSuccess { updated ->
+                    _uiState.value = ProfileUiState(
+                        profile = updated,
+                        saveSuccess = true
+                    )
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "We couldn't upload your profile picture. Please try again."
+                    )
+                }
+        }
+    }
+
+    fun deleteProfilePicture() {
+        viewModelScope.launch {
+            val token = tokenStore.getToken().first() ?: return@launch
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                saveSuccess = false
+            )
+
+            repository.deleteProfilePicture(token)
+                .onSuccess { updated ->
+                    _uiState.value = ProfileUiState(
+                        profile = updated,
+                        saveSuccess = true
+                    )
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = "We couldn't delete your profile picture. Please try again."
                     )
                 }
         }

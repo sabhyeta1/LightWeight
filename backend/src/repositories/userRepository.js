@@ -34,17 +34,41 @@ async function findUserById(id) {
   return rows[0] ? new User(rows[0]) : null;
 }
 
-// FR-17: Update display_name and profile_picture_url
-async function updateUser(id, displayName, profilePictureUrl) {
+// FR-17: Update display_name
+async function updateUser(userId, displayName) {
   const sql = `
     UPDATE users
-    SET display_name = $1,
-        profile_picture_url = $2
-    WHERE id = $3
+    SET display_name = $2
+    WHERE id = $1
     RETURNING id, username, display_name, profile_picture_url
   `;
-  const { rows } = await db.query(sql, [displayName, profilePictureUrl, id]);
+  const { rows } = await db.query(sql, [userId, displayName]);
   return rows[0] ? new User(rows[0]) : null;
 }
 
-module.exports = { createUser, findUserWithPasswordByUsername, findUserById, updateUser };
+async function updateProfilePicture(userId, profilePictureUrl) {
+  const sql = `
+    UPDATE users
+    SET profile_picture_url = $2
+    WHERE id = $1
+    RETURNING id, username, display_name, profile_picture_url
+  `;
+
+  const { rows } = await db.query(sql, [userId, profilePictureUrl]);
+
+  return rows[0] ? new User(rows[0]) : null;
+}
+
+async function deleteProfilePicture(userId) {
+  const sql = `
+    UPDATE users
+    SET profile_picture_url = NULL
+    WHERE id = $1
+    RETURNING id, username, display_name, profile_picture_url
+  `;
+
+  const { rows } = await db.query(sql, [userId]);
+  return rows[0] ? new User(rows[0]) : null;
+}
+
+module.exports = { createUser, findUserWithPasswordByUsername, findUserById, updateUser, updateProfilePicture, deleteProfilePicture };

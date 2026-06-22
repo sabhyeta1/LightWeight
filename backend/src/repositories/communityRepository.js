@@ -281,8 +281,54 @@ async function copyPublishedPlan(planId, userId) {
   }
 }
 
+async function savePlan(userId, planId) {
+  await db.query(
+    `INSERT INTO saved_plans (user_id, workout_plan_id)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id, workout_plan_id) DO NOTHING`,
+    [userId, planId]
+  );
+}
+
+async function unsavePlan(userId, planId) {
+  await db.query(
+    `DELETE FROM saved_plans WHERE user_id = $1 AND workout_plan_id = $2`,
+    [userId, planId]
+  );
+}
+
+async function findSavedPlans(userId) {
+  const sql = `
+    SELECT
+      wp.id,
+      wp.owner_id,
+      wp.name,
+      wp.description,
+      wp.is_published,
+      u.display_name AS owner_name,
+      COALESCE(
+        ARRAY_AGG(DISTINCT mg.name) FILTER (WHERE mg.name IS NOT NULL),
+        '{}'
+      ) AS muscle_groups
+    FROM saved_plans sp
+    JOIN workout_plan wp ON wp.id = sp.workout_plan_id
+    JOIN users u ON u.id = wp.owner_id
+    LEFT JOIN exercises_workout_plan ewp ON ewp.workout_plan_id = wp.id
+    LEFT JOIN exercises_muscle_groups emg ON emg.exercise_id = ewp.exercise_id
+    LEFT JOIN muscle_groups mg ON mg.id = emg.muscle_group_id
+    WHERE sp.user_id = $1
+    GROUP BY wp.id, wp.owner_id, wp.name, wp.description, wp.is_published, u.display_name, sp.saved_at
+    ORDER BY sp.saved_at DESC
+  `;
+  const { rows } = await db.query(sql, [userId]);
+  return rows;
+}
+
 module.exports = {
   findPublishedPlans,
   findPublishedPlanById,
   copyPublishedPlan,
+  savePlan,
+  unsavePlan,
+  findSavedPlans,
 };

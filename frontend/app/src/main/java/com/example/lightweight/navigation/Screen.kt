@@ -17,11 +17,14 @@ sealed class Screen(val route: String) {
         fun createRoute(planId: Int, planName: String) = "edit_plan/$planId/$planName"
     }
     object ExerciseDetail : Screen("exercise_detail/{exerciseName}") {
-        //fun createRoute(exerciseName: String) = "exercise_detail/$exerciseName"
         fun createRoute(exerciseName: String) = "exercise_detail/${java.net.URLEncoder.encode(exerciseName, "UTF-8")}"
     }
 
     object CommunityPlanDetail : Screen("community_plan_detail/{planId}") {
         fun createRoute(planId: Int) = "community_plan_detail/$planId"
     }
+
+    object WaterTracking : Screen("water_tracking")
+    object Supplements : Screen("supplements")
+    object SavedPlans : Screen("saved_plans")
 }

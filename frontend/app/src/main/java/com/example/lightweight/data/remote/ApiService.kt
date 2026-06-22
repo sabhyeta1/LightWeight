@@ -1,5 +1,6 @@
 package com.example.lightweight.data.remote
 
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 interface ApiService {
@@ -85,6 +86,24 @@ interface ApiService {
         @Path("id") id: Int
     ): WorkoutPlanDetailResponse
 
+    // FR-18
+    @GET("api/community/saved")
+    suspend fun getSavedPlans(
+        @Header("Authorization") token: String
+    ): List<CommunityPlanResponse>
+
+    @POST("api/community/workout-plans/{id}/save")
+    suspend fun savePlan(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
+    @DELETE("api/community/workout-plans/{id}/save")
+    suspend fun unsavePlan(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
     // Calendar
     @GET("api/calendar/sessions")
     suspend fun getCalendarSessions(
@@ -150,10 +169,63 @@ interface ApiService {
         @Header("Authorization") token: String
     ): UserProfileResponse
 
-    @PATCH("api/user/profile")
+    @PUT("api/user/profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
         @Body body: UpdateProfileRequest
     ): UserProfileResponse
 
+    @Multipart
+    @POST("api/user/profile-picture")
+    suspend fun uploadProfilePicture(
+        @Header("Authorization") token: String,
+        @Part image: MultipartBody.Part
+    ): UserProfileResponse
+
+    @DELETE("api/user/profile-picture")
+    suspend fun deleteProfilePicture(
+        @Header("Authorization") token: String
+    ): UserProfileResponse
+
+    // Water Tracking
+    @GET("api/water/status")
+    suspend fun getWaterStatus(
+        @Header("Authorization") token: String
+    ): WaterStatusResponse
+
+    @PUT("api/water/goal")
+    suspend fun setWaterGoal(
+        @Header("Authorization") token: String,
+        @Body body: SetWaterGoalRequest
+    ): WaterGoalResponse
+
+    @POST("api/water/intake")
+    suspend fun addWaterIntake(
+        @Header("Authorization") token: String,
+        @Body body: AddWaterIntakeRequest
+    ): WaterLogResponse
+
+    @DELETE("api/water/intake/{id}")
+    suspend fun deleteWaterIntake(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
+
+    // Supplements
+    @GET("api/supplement")
+    suspend fun getSupplements(
+        @Header("Authorization") token: String
+    ): List<SupplementResponse>
+
+    @POST("api/supplement")
+    suspend fun createSupplement(
+        @Header("Authorization") token: String,
+        @Body body: CreateSupplementRequest
+    ): SupplementResponse
+
+    @DELETE("api/supplement/{id}")
+    suspend fun deleteSupplement(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    )
 }

@@ -161,31 +161,48 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
             Spacer(modifier = Modifier.height(4.dp))
 
             if (exercise.sets.isNotEmpty()) {
-                val firstSet = exercise.sets.first()
+                val mainSets = exercise.sets.filter { it.is_drop_set != true }
+                val dropSets = exercise.sets.filter { it.is_drop_set == true }
+
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val details = mutableListOf<String>()
-                    details.add("Sets: ${exercise.sets.size}")
-                    firstSet.reps?.let { details.add("Reps: $it") }
-                    firstSet.weight?.let { details.add("Weight: $it kg") }
+                    if (mainSets.isNotEmpty()) {
+                        val firstSet = mainSets.first()
+                        val details = mutableListOf<String>()
+                        details.add("Sets: ${mainSets.size}")
+                        firstSet.reps?.let { details.add("Reps: $it") }
+                        firstSet.weight?.let { details.add("Weight: $it kg") }
 
-                    Text(
-                        text = details.joinToString(" | "),
-                        color = Color.LightGray,
-                        fontSize = 14.sp
-                    )
+                        Text(
+                            text = details.joinToString(" | "),
+                            color = Color.LightGray,
+                            fontSize = 14.sp
+                        )
 
-                    firstSet.machine_settings?.let { settings ->
-                        if (settings.isNotEmpty()) {
-                            Text(
-                                text = "[$settings]",
-                                color = Blue,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
+                        firstSet.machine_settings?.let { settings ->
+                            if (settings.isNotEmpty()) {
+                                Text(
+                                    text = "[$settings]",
+                                    color = Blue,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                         }
+                    }
+
+                    dropSets.forEach { dropSet ->
+                        val dropDetails = mutableListOf<String>()
+                        dropSet.reps?.let { dropDetails.add("Reps: $it") }
+                        dropSet.weight?.let { dropDetails.add("Weight: $it kg") }
+                        Text(
+                            text = "Drop Set: ${dropDetails.joinToString(" | ")}",
+                            color = Color.Gray,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             } else {
@@ -195,6 +212,42 @@ fun ExerciseCard(exercise: ExerciseInPlanResponse) {
                     fontSize = 14.sp
                 )
             }
+
+//            if (exercise.sets.isNotEmpty()) {
+//                val firstSet = exercise.sets.first()
+//                Column(
+//                    modifier = Modifier.fillMaxWidth()
+//                ) {
+//                    val details = mutableListOf<String>()
+//                    details.add("Sets: ${exercise.sets.size}")
+//                    firstSet.reps?.let { details.add("Reps: $it") }
+//                    firstSet.weight?.let { details.add("Weight: $it kg") }
+//
+//                    Text(
+//                        text = details.joinToString(" | "),
+//                        color = Color.LightGray,
+//                        fontSize = 14.sp
+//                    )
+//
+//                    firstSet.machine_settings?.let { settings ->
+//                        if (settings.isNotEmpty()) {
+//                            Text(
+//                                text = "[$settings]",
+//                                color = Blue,
+//                                fontSize = 14.sp,
+//                                fontWeight = FontWeight.Medium,
+//                                modifier = Modifier.padding(top = 2.dp)
+//                            )
+//                        }
+//                    }
+//                }
+//            } else {
+//                Text(
+//                    text = "no sets defined",
+//                    color = Color.DarkGray,
+//                    fontSize = 14.sp
+//                )
+//            }
         }
     }
 }
