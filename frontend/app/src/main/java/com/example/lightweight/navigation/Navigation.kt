@@ -261,7 +261,8 @@ fun Navigation(navController: NavHostController) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                viewModel = profileViewModel
+                viewModel = profileViewModel,
+                calendarViewModel = calendarViewModel
             )
         }
 

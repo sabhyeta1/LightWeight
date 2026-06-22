@@ -12,6 +12,8 @@ import com.example.lightweight.data.remote.UpdateFutureSessionsRequest
 import com.example.lightweight.data.remote.ExerciseLibraryResponse
 import com.example.lightweight.data.remote.MuscleGroupResponse
 import com.example.lightweight.data.repository.CalendarRepository
+import com.example.lightweight.notifications.NotificationPreferenceStore
+import com.example.lightweight.notifications.WorkoutNotificationScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -42,12 +44,16 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
 
     private val repository = CalendarRepository()
     private val tokenStore = TokenStore(application)
+    private val notifPrefs = NotificationPreferenceStore(application)
 
     private val _calendarState = MutableStateFlow(CalendarUiState())
     val calendarState: StateFlow<CalendarUiState> = _calendarState
 
     private val _libraryState = MutableStateFlow(ExerciseLibraryUiState())
     val libraryState: StateFlow<ExerciseLibraryUiState> = _libraryState
+
+    // FR-22: observable notifications preference
+    val notificationsEnabled = notifPrefs.notificationsEnabled
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -70,7 +76,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
-            val from = LocalDate.now().minusMonths(3).format(dateFormatter)
+            val from = LocalDate.now().format(dateFormatter)
             val to   = until.format(dateFormatter)
 
             repository.getSessions(token, from, to)
@@ -79,6 +85,13 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                         isLoading = false,
                         sessions = sessions,
                         loadedUntil = until
+                    )
+                    // FR-21: reschedule notifications for updated session list
+                    val notifEnabled = notifPrefs.notificationsEnabled.first()
+                    WorkoutNotificationScheduler.rescheduleAll(
+                        getApplication(),
+                        sessions,
+                        notifEnabled
                     )
                 }
                 .onFailure { error ->
@@ -241,6 +254,18 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
                     }
                     _calendarState.value = _calendarState.value.copy(errorMessage = message)
                 }
+        }
+    }
+
+    // FR-22: called when user toggles notifications on/off
+    fun onNotificationsToggled(enabled: Boolean) {
+        viewModelScope.launch {
+            notifPrefs.setNotificationsEnabled(enabled)
+            WorkoutNotificationScheduler.rescheduleAll(
+                getApplication(),
+                _calendarState.value.sessions,
+                enabled
+            )
         }
     }
 
